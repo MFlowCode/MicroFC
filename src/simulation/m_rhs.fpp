@@ -158,7 +158,7 @@ module m_rhs
 !$acc   dq_prim_dx_qp,dq_prim_dy_qp,gm_vel_qp,dqL_prim_dx_n,dqL_prim_dy_n, &
 !$acc   dqR_prim_dx_n,dqR_prim_dy_n,gm_alpha_qp,       &
 !$acc   gm_alphaL_n,gm_alphaR_n,flux_n,flux_src_n,flux_gsrc_n,       &
-!$acc   tau_Re_vf,qL_prim, qR_prim, iv,ix, iy,is1,is2,is3, &
+!$acc   tau_Re_vf,qL_prim, qR_prim, iv,ix, iy,is1,is2, &
 !$acc   myflux_vf, myflux_src_vf,alf_sum, &
 !$acc   blkmod1, blkmod2, alpha1, alpha2, qL_rsx_vf, qL_rsy_vf, qR_rsx_vf, qR_rsy_vf, &
 !$acc   dqL_rsx_vf, dqL_rsy_vf, dqR_rsx_vf, dqR_rsy_vf, &
@@ -172,10 +172,10 @@ contains
         !!      other procedures that are necessary to setup the module.
     subroutine s_initialize_rhs_module() ! ---------------------------------
 
-        integer :: i, j, k !< Generic loop iterators
+        integer :: i, j, k, l !< Generic loop iterators
 
         ! Configuring Coordinate Direction Indexes =========================
-        ix%beg = -buff_size; iy%beg = 0; iz%beg = 0
+        ix%beg = -buff_size; iy%beg = 0
 
         if (n > 0) iy%beg = -buff_size
 
@@ -285,12 +285,10 @@ contains
                 do l = mom_idx%beg, mom_idx%end
                     @:ALLOCATE(dq_prim_dx_qp%vf(l)%sf( &
                               & ix%beg:ix%end, &
-                              & iy%beg:iy%end, &
-                              & iz%beg:iz%end))
+                              & iy%beg:iy%end ))
                     @:ALLOCATE(gm_vel_qp%vf(l)%sf( &
                               & ix%beg:ix%end, &
-                              & iy%beg:iy%end, &
-                              & iz%beg:iz%end))
+                              & iy%beg:iy%end ))
                 end do
 
                 if (n > 0) then
@@ -298,8 +296,7 @@ contains
                     do l = mom_idx%beg, mom_idx%end
                         @:ALLOCATE(dq_prim_dy_qp%vf(l)%sf( &
                                  & ix%beg:ix%end, &
-                                 & iy%beg:iy%end, &
-                                 & iz%beg:iz%end))
+                                 & iy%beg:iy%end ))
                     end do
 
                 end if
@@ -327,24 +324,20 @@ contains
                     do l = mom_idx%beg, mom_idx%end
                         @:ALLOCATE(dqL_prim_dx_n(i)%vf(l)%sf( &
                                  & ix%beg:ix%end, &
-                                 & iy%beg:iy%end, &
-                                 & iz%beg:iz%end))
+                                 & iy%beg:iy%end ))
                         @:ALLOCATE(dqR_prim_dx_n(i)%vf(l)%sf( &
                                  & ix%beg:ix%end, &
-                                 & iy%beg:iy%end, &
-                                 & iz%beg:iz%end))
+                                 & iy%beg:iy%end ))
                     end do
 
                     if (n > 0) then
                         do l = mom_idx%beg, mom_idx%end
                             @:ALLOCATE(dqL_prim_dy_n(i)%vf(l)%sf( &
                                      & ix%beg:ix%end, &
-                                     & iy%beg:iy%end, &
-                                     & iz%beg:iz%end))
+                                     & iy%beg:iy%end ))
                             @:ALLOCATE(dqR_prim_dy_n(i)%vf(l)%sf( &
                                      & ix%beg:ix%end, &
-                                     & iy%beg:iy%end, &
-                                     & iz%beg:iz%end))
+                                     & iy%beg:iy%end ))
                         end do
                     end if
 
@@ -405,24 +398,23 @@ contains
                 do l = 1, sys_size
                     @:ALLOCATE(flux_n(i)%vf(l)%sf( &
                              & ix%beg:ix%end, &
-                             & iy%beg:iy%end, &
-                             & iz%beg:iz%end))
+                             & iy%beg:iy%end ))
                     @:ALLOCATE(flux_gsrc_n(i)%vf(l)%sf( &
                             & ix%beg:ix%end, &
-                            & iy%beg:iy%end )
+                            & iy%beg:iy%end ))
                 end do
 
                 if (any(Re_size > 0)) then
                     do l = mom_idx%beg, E_idx
                         @:ALLOCATE(flux_src_n(i)%vf(l)%sf( &
                                  & ix%beg:ix%end, &
-                                 & iy%beg:iy%end )
+                                 & iy%beg:iy%end ))
                     end do
                 end if
 
                 @:ALLOCATE(flux_src_n(i)%vf(adv_idx%beg)%sf( &
                          & ix%beg:ix%end, &
-                         & iy%beg:iy%end )
+                         & iy%beg:iy%end ))
 
                 do l = adv_idx%beg + 1, adv_idx%end
                     flux_src_n(i)%vf(l)%sf => &
@@ -434,7 +426,7 @@ contains
                 do l = 1, sys_size
                     @:ALLOCATE(flux_gsrc_n(i)%vf(l)%sf( &
                               ix%beg:ix%end, &
-                              iy%beg:iy%end)
+                              iy%beg:iy%end))
                 end do
                 do l = 1, sys_size
                     flux_n(i)%vf(l)%sf => &
@@ -482,7 +474,6 @@ contains
 
         !$acc parallel loop collapse(4) gang vector default(present)
         do i = 1, sys_size
-            do l = startz, p - startz
                 do k = starty, n - starty
                     do j = startx, m - startx
                         flux_gsrc_n(1)%vf(i)%sf(j, k) = 0d0
@@ -492,7 +483,6 @@ contains
                         end if
 
                     end do
-                end do
             end do
         end do
 
@@ -509,10 +499,10 @@ contains
         type(scalar_field), dimension(sys_size), intent(INOUT) :: rhs_vf
         integer, intent(IN) :: t_step
 
-        integer :: i, j, k, r, q, ii, id !< Generic loop iterators
+        integer :: i, j, k, l, r, q, ii, id !< Generic loop iterators
 
         ! Configuring Coordinate Direction Indexes =========================
-        ix%beg = -buff_size; iy%beg = 0; iz%beg = 0
+        ix%beg = -buff_size; iy%beg = 0
 
         if (n > 0) iy%beg = -buff_size
 
@@ -524,13 +514,11 @@ contains
         ! Association/Population of Working Variables ======================
         !$acc parallel loop collapse(4) gang vector default(present)
         do i = 1, sys_size
-            do l = iz%beg, iz%end
                 do k = iy%beg, iy%end
                     do j = ix%beg, ix%end
                         q_cons_qp%vf(i)%sf(j, k) = q_cons_vf(i)%sf(j, k)
                     end do
                 end do
-            end do
         end do
 
         call nvtxStartRange("RHS-MPI")
@@ -573,7 +561,7 @@ contains
         do id = 1, num_dims
 
             ! Configuring Coordinate Direction Indexes ======================
-            ix%beg = -buff_size; iy%beg = 0; iz%beg = 0
+            ix%beg = -buff_size; iy%beg = 0
 
             if (n > 0) iy%beg = -buff_size
 
@@ -670,38 +658,33 @@ contains
 
                 !$acc parallel loop collapse(4) gang vector default(present)
                 do j = 1, sys_size
-                    do q = 0, p
                         do l = 0, n
                             do k = 0, m
-                                rhs_vf(j)%sf(k, l, q) = 1d0/dx(k)* &
-                                                        (flux_n(1)%vf(j)%sf(k - 1, l, q) &
-                                                         - flux_n(1)%vf(j)%sf(k, l, q))
+                                rhs_vf(j)%sf(k, l) = 1d0/dx(k)* &
+                                                        (flux_n(1)%vf(j)%sf(k - 1, l) &
+                                                         - flux_n(1)%vf(j)%sf(k, l))
                             end do
                         end do
-                    end do
                 end do
 
                 !$acc parallel loop collapse(4) gang vector default(present)
                 do j = advxb, advxe
-                    do q = 0, p
                         do l = 0, n
                             do k = 0, m
-                                rhs_vf(j)%sf(k, l, q) = &
-                                    rhs_vf(j)%sf(k, l, q) + 1d0/dx(k)* &
-                                    q_cons_qp%vf(j)%sf(k, l, q)* &
-                                    (flux_src_n(1)%vf(j)%sf(k, l, q) &
-                                     - flux_src_n(1)%vf(j)%sf(k - 1, l, q))
+                                rhs_vf(j)%sf(k, l) = &
+                                    rhs_vf(j)%sf(k, l) + 1d0/dx(k)* &
+                                    q_cons_qp%vf(j)%sf(k, l)* &
+                                    (flux_src_n(1)%vf(j)%sf(k, l) &
+                                     - flux_src_n(1)%vf(j)%sf(k - 1, l))
                             end do
                         end do
-                    end do
                 end do
 
                 if (any(Re_size > 0)) then
 !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
                         do k = 0, n
                             do j = 0, m
-!$acc loop seq
+                                !$acc loop seq
                                 do i = momxb, E_idx
                                     rhs_vf(i)%sf(j, k) = &
                                         rhs_vf(i)%sf(j, k) + 1d0/dx(j)* &
@@ -709,7 +692,6 @@ contains
                                          - flux_src_n(1)%vf(i)%sf(j, k))
                                 end do
                             end do
-                        end do
                     end do
                 end if
 
@@ -717,10 +699,8 @@ contains
                 ! RHS Contribution in y-direction ===============================
                 ! Applying the Riemann fluxes
 
-
-!$acc parallel loop collapse(4) gang vector default(present)
+                !$acc parallel loop collapse(4) gang vector default(present)
                 do j = 1, sys_size
-                    do l = 0, p
                         do k = 0, n
                             do q = 0, m
                                 rhs_vf(j)%sf(q, k) = &
@@ -729,22 +709,19 @@ contains
                                      - flux_n(2)%vf(j)%sf(q, k))
                             end do
                         end do
-                    end do
                 end do
                 ! Applying source terms to the RHS of the advection equations
 
 
                 !$acc parallel loop collapse(4) gang vector default(present)
                 do j = advxb, advxe
-                    do l = 0, p
-                        do k = 0, n
-                            do q = 0, m
-                                rhs_vf(j)%sf(q, k) = &
-                                    rhs_vf(j)%sf(q, k) + 1d0/dy(k)* &
-                                    q_cons_qp%vf(j)%sf(q, k)* &
-                                    (flux_src_n(2)%vf(j)%sf(q, k) &
-                                     - flux_src_n(2)%vf(j)%sf(q, k - 1))
-                            end do
+                    do k = 0, n
+                        do q = 0, m
+                            rhs_vf(j)%sf(q, k) = &
+                                rhs_vf(j)%sf(q, k) + 1d0/dy(k)* &
+                                q_cons_qp%vf(j)%sf(q, k)* &
+                                (flux_src_n(2)%vf(j)%sf(q, k) &
+                                 - flux_src_n(2)%vf(j)%sf(q, k - 1))
                         end do
                     end do
                 end do
@@ -753,19 +730,18 @@ contains
 
                 if (any(Re_size > 0)) then
                     !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 0, n
-                            do j = 0, m
-                                !$acc loop seq
-                                do i = momxb, E_idx
-                                    rhs_vf(i)%sf(j, k) = &
-                                        rhs_vf(i)%sf(j, k) + 1d0/dy(k)* &
-                                        (flux_src_n(2)%vf(i)%sf(j, k - 1) &
-                                         - flux_src_n(2)%vf(i)%sf(j, k))
-                                end do
+                    do k = 0, n
+                        do j = 0, m
+                            !$acc loop seq
+                            do i = momxb, E_idx
+                                rhs_vf(i)%sf(j, k) = &
+                                    rhs_vf(i)%sf(j, k) + 1d0/dy(k)* &
+                                    (flux_src_n(2)%vf(i)%sf(j, k - 1) &
+                                     - flux_src_n(2)%vf(i)%sf(j, k))
                             end do
                         end do
                     end do
+                end if
             end if  ! id loop
             call nvtxEndRange
 
@@ -774,20 +750,18 @@ contains
 
         if (run_time_info .or. probe_wrt) then
 
-            ix%beg = -buff_size; iy%beg = 0; iz%beg = 0
+            ix%beg = -buff_size; iy%beg = 0
             if (n > 0) iy%beg = -buff_size; 
             ix%end = m - ix%beg; iy%end = n - iy%beg
             !$acc update device(ix, iy)
 
             !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do l = iz%beg, iz%end
                     do k = iy%beg, iy%end
                         do j = ix%beg, ix%end
                             q_prim_vf(i)%sf(j, k) = q_prim_qp%vf(i)%sf(j, k)
                         end do
                     end do
-                end do
             end do
 
         end if
@@ -803,7 +777,7 @@ contains
         !!      boundary conditions.
     subroutine s_populate_conservative_variables_buffers() ! ---------------
 
-        integer :: i, j, k, r !< Generic loop iterators
+        integer :: i, j, l, k, r !< Generic loop iterators
 
         ! Population of Buffers in x-direction =============================
 
@@ -811,20 +785,17 @@ contains
 
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do l = 0, p
                     do k = 0, n
                         do j = 1, buff_size
                             q_cons_qp%vf(i)%sf(-j, k) = &
                                 q_cons_qp%vf(i)%sf(0, k)
                         end do
                     end do
-                end do
             end do
 
         elseif (bc_x%beg == -2) then     ! Symmetry BC at beginning
 
 !$acc parallel loop collapse(3) gang vector default(present)
-            do l = 0, p
                 do k = 0, n
                     do j = 1, buff_size
 !$acc loop seq
@@ -841,21 +812,18 @@ contains
                                 q_cons_qp%vf(i)%sf(j - 1, k)
                         end do
                     end do
-                end do
             end do
 
         elseif (bc_x%beg == -1) then     ! Periodic BC at beginning
 
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do l = 0, p
                     do k = 0, n
                         do j = 1, buff_size
                             q_cons_qp%vf(i)%sf(-j, k) = &
                                 q_cons_qp%vf(i)%sf(m - (j - 1), k)
                         end do
                     end do
-                end do
             end do
 
         else                            ! Processor BC at beginning
@@ -869,20 +837,17 @@ contains
 
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do l = 0, p
                     do k = 0, n
                         do j = 1, buff_size
                             q_cons_qp%vf(i)%sf(m + j, k) = &
                                 q_cons_qp%vf(i)%sf(m, k)
                         end do
                     end do
-                end do
             end do
 
         elseif (bc_x%end == -2) then     ! Symmetry BC at end
 
 !$acc parallel loop collapse(3) default(present)
-            do l = 0, p
                 do k = 0, n
                     do j = 1, buff_size
 
@@ -903,20 +868,17 @@ contains
 
                     end do
                 end do
-            end do
 
         elseif (bc_x%end == -1) then     ! Periodic BC at end
 
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do l = 0, p
                     do k = 0, n
                         do j = 1, buff_size
                             q_cons_qp%vf(i)%sf(m + j, k) = &
                                 q_cons_qp%vf(i)%sf(j - 1, k)
                         end do
                     end do
-                end do
             end do
 
         else                            ! Processor BC at end
@@ -938,19 +900,16 @@ contains
 
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do k = 0, p
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size
                             q_cons_qp%vf(i)%sf(l, -j) = &
                                 q_cons_qp%vf(i)%sf(l, 0)
                         end do
                     end do
-                end do
             end do
 
         elseif (bc_y%beg == -2) then     ! Symmetry BC at beginning
 !$acc parallel loop collapse(3) gang vector default(present)
-            do k = 0, p
                 do j = 1, buff_size
                     do l = -buff_size, m + buff_size
 !$acc loop seq
@@ -968,19 +927,16 @@ contains
                         end do
                     end do
                 end do
-            end do
 
         elseif (bc_y%beg == -1) then     ! Periodic BC at beginning
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do k = 0, p
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size
                             q_cons_qp%vf(i)%sf(l, -j) = &
                                 q_cons_qp%vf(i)%sf(l, n - (j - 1))
                         end do
                     end do
-                end do
             end do
 
         else                            ! Processor BC at beginning
@@ -993,20 +949,17 @@ contains
         if (bc_y%end <= -3) then         ! Ghost-cell extrap. BC at end
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do k = 0, p
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size
                             q_cons_qp%vf(i)%sf(l, n + j) = &
                                 q_cons_qp%vf(i)%sf(l, n)
                         end do
                     end do
-                end do
             end do
 
         elseif (bc_y%end == -2) then     ! Symmetry BC at end
 
 !$acc parallel loop collapse(3) gang vector default(present)
-            do k = 0, p
                 do j = 1, buff_size
                     do l = -buff_size, m + buff_size
 !$acc loop seq
@@ -1024,19 +977,16 @@ contains
                         end do
                     end do
                 end do
-            end do
 
         elseif (bc_y%end == -1) then     ! Periodic BC at end
 !$acc parallel loop collapse(4) gang vector default(present)
             do i = 1, sys_size
-                do k = 0, p
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size
                             q_cons_qp%vf(i)%sf(l, n + j) = &
                                 q_cons_qp%vf(i)%sf(l, j - 1)
                         end do
                     end do
-                end do
             end do
 
         else                            ! Processor BC at end
@@ -1063,38 +1013,32 @@ contains
                                                       norm_dir)
 
         type(scalar_field), dimension(iv%beg:iv%end), intent(IN) :: v_vf
-
         real(kind(0d0)), dimension(startx:, starty:, 1:), intent(INOUT) :: vL_x, vL_y, vR_x, vR_y
-
         integer, intent(IN) :: norm_dir
-
         integer :: weno_dir !< Coordinate direction of the WENO reconstruction
-
         integer :: i, j, k
-        ! Reconstruction in s1-direction ===================================
 
         if (norm_dir == 1) then
-            is1 = ix; is2 = iy; is3 = iz
+            is1 = ix; is2 = iy
             weno_dir = 1; is1%beg = is1%beg + weno_polyn
             is1%end = is1%end - weno_polyn
 
         elseif (norm_dir == 2) then
-            is1 = iy; is2 = ix; is3 = iz
+            is1 = iy; is2 = ix
             weno_dir = 2; is1%beg = is1%beg + weno_polyn
             is1%end = is1%end - weno_polyn
         end if
 
         if (n > 0) then
             call s_weno(v_vf(iv%beg:iv%end), &
-                vL_x(:, :, :, iv%beg:iv%end), vL_y(:, :, :, iv%beg:iv%end), vR_x(:, :, :, iv%beg:iv%end), vR_y(:, :, :, iv%beg:iv%end),  &
-                            norm_dir, weno_dir, &
-                            is1, is2)
+                vL_x(:, :, iv%beg:iv%end), vL_y(:, :, iv%beg:iv%end), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, iv%beg:iv%end),  &
+                norm_dir, weno_dir, &
+                is1, is2)
         else
-
             call s_weno(v_vf(iv%beg:iv%end), &
-                        vL_x(:, :, :, iv%beg:iv%end), vL_y(:, :, :), vR_x(:, :, :, iv%beg:iv%end), vR_y(:, :, :), &
-                            norm_dir, weno_dir, &
-                            is1, is2)
+                vL_x(:, :, iv%beg:iv%end), vL_y(:, :, :), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, :), &
+                norm_dir, weno_dir, &
+                is1, is2)
         end if
 
         ! ==================================================================
