@@ -5,7 +5,7 @@ from ..state import ARG
 COMMON = [
     "parallel_io",
     "case_dir", 
-    "m", "mpp_lim", "adv_alphan", "num_fluids", "model_eqns",
+    "m", "adv_alphan", "num_fluids", "model_eqns",
     "weno_order", "n", "precision"
 ]
 
@@ -60,48 +60,29 @@ for p_id in range(1, 10+1):
 SIMULATION = COMMON + [
     'run_time_info', 't_step_old', 't_tol', 'dt', 't_step_start',
     't_step_stop', 't_step_save', 'time_stepper', 'weno_vars', 'weno_eps',
-    'char_decomp', 'mapped_weno', 'mp_weno', 'weno_avg', 'weno_Re_flux',
-    'riemann_solver', 'wave_speeds', 'avg_state', 'commute_err', 'split_err',
-    'alt_crv', 'alt_soundspeed', 'regularization', 'reg_eps', 'null_weights',
-    'mixture_err', 'tvd_riemann_flux', 'tvd_rhs_flux', 'tvd_wave_speeds',
-    'flux_lim', 'lsq_deriv', 'fd_order', 'num_probes', 'probe_wrt', 
-    'bubble_model', 'Monopole', 'num_mono', 'qbmm', 'R0_type', 'integral_wrt', 
-    'num_integrals', 'cu_mpi'
+    'weno_avg', 'weno_Re_flux', 'wave_speeds', 'avg_state', 'commute_err', 'split_err',
+    'reg_eps', 'null_weights', 'mixture_err', 'tvd_riemann_flux', 'tvd_rhs_flux', 
+    'tvd_wave_speeds', 'fd_order', 'num_probes', 'probe_wrt', 'cu_mpi'
 ]
 
-for cmp in ["x", "y", "z"]:
+for cmp in ["x", "y"]:
     SIMULATION.append(f'bc_{cmp}%beg')
     SIMULATION.append(f'bc_{cmp}%end')
 
 for wrt_id in range(1,10+1):
-    for cmp in ["x", "y", "z"]:
+    for cmp in ["x", "y"]:
         SIMULATION.append(f'probe_wrt({wrt_id})%{cmp}')
 
 for probe_id in range(1,3+1):
-    for cmp in ["x", "y", "z"]:
+    for cmp in ["x", "y"]:
         SIMULATION.append(f'probe({probe_id})%{cmp}')
 
 for f_id in range(1,10+1):
-    for attribute in ["gamma", "pi_inf", "mul0", "ss", "pv", "gamma_v", "M_v",
-                      "mu_v", "k_v", "G"]:
+    for attribute in ["gamma", "pi_inf"]:
         SIMULATION.append(f"fluid_pp({f_id})%{attribute}")
 
     for re_id in [1, 2]:
         SIMULATION.append(f"fluid_pp({f_id})%Re({re_id})")
-
-    for mono_id in range(1,4+1):
-        for attribute in ["mag", "length", "dir", "npulse", "pulse", "support",
-                          "delay", "foc_length", "aperture"]:
-            SIMULATION.append(f"Mono({mono_id})%{attribute}")
-
-        for cmp_id in range(1,3+1):
-            SIMULATION.append(f"Mono({mono_id})%loc({cmp_id})")
-
-    for int_id in range(1,5+1):
-        for cmp in ["x", "y", "z"]:
-            SIMULATION.append(f"integral({int_id})%{cmp}min")
-            SIMULATION.append(f"integral({int_id})%{cmp}max")
-
 
 POST_PROCESS = COMMON + [
     't_step_start', 't_step_stop', 't_step_save', 'alt_soundspeed',
@@ -113,8 +94,8 @@ POST_PROCESS = COMMON + [
     'schlieren_wrt', 'schlieren_alpha', 'fd_order'
 ]
 
-for cmp_id in range(1,3+1):
-    cmp = ["x", "y", "z"][cmp_id-1]
+for cmp_id in range(1,2+1):
+    cmp = ["x", "y"][cmp_id-1]
 
     POST_PROCESS.append(f'bc_{cmp}%beg')
     POST_PROCESS.append(f'bc_{cmp}%end')
