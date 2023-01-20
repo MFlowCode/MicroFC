@@ -37,7 +37,6 @@ module m_start_up
  s_read_serial_data_files, &
  s_read_parallel_data_files, &
  s_populate_grid_variables_buffers, &
- s_initialize_internal_energy_equations, &
  s_finalize_start_up_module
 
     abstract interface ! ===================================================
@@ -55,7 +54,7 @@ module m_start_up
 
     end interface ! ========================================================
 
-    type(scalar_field), allocatable, dimension(:) :: grad_x_vf, grad_y_vf, grad_z_vf, norm_vf
+    type(scalar_field), allocatable, dimension(:) :: grad_x_vf, grad_y_vf, norm_vf
 
     procedure(s_read_abstract_data_files), pointer :: s_read_data_files => null()
 
@@ -73,30 +72,22 @@ contains
             !! Logical used to check the existence of the input file
 
         ! Namelist of the global parameters which may be specified by user
-        namelist /user_inputs/ case_dir, run_time_info, m, n, p, dt, &
+        namelist /user_inputs/ case_dir, run_time_info, m, n, dt, &
             t_step_start, t_step_stop, t_step_save, &
-            model_eqns, num_fluids, adv_alphan, &
+            num_fluids, adv_alphan, &
             time_stepper, weno_vars, &
-            weno_eps, weno_flat, riemann_flat, cu_mpi, cu_tensor, &
-            mapped_weno, mp_weno, &
+            weno_eps, weno_flat, riemann_flat, cu_mpi, &
+            mapped_weno, &
             riemann_solver, wave_speeds, avg_state, &
-            bc_x, bc_y, bc_z, &
-            hypoelasticity, &
+            bc_x, bc_y, &
             fluid_pp, probe_wrt, &
             fd_order, probe, num_probes, t_step_old, &
             weno_Re_flux, &
-            null_weights, precision, parallel_io, cyl_coord, &
-            rhoref, pref, bubbles, bubble_model, &
-            R0ref, &
 #:if not MFC_CASE_OPTIMIZATION
-            nb, weno_order, &
+            weno_order, &
 #:endif
-            Ca, Web, Re_inv, &
-            monopole, mono, num_mono, &
-            polytropic, thermal, &
-            integral, integral_wrt, num_integrals, &
-            polydisperse, poly_sigma, qbmm, &
-            R0_type
+            null_weights, precision, parallel_io 
+
 
         ! Checking that an input file has been provided by the user. If it
         ! has, then the input file is read in, otherwise, simulation exits.
@@ -114,13 +105,10 @@ contains
             bc_x_glb%end = bc_x%end
             bc_y_glb%beg = bc_y%beg
             bc_y_glb%end = bc_y%end
-            bc_z_glb%beg = bc_z%beg
-            bc_z_glb%end = bc_z%end
 
             ! Store m,n,p into global m,n,p
             m_glb = m
             n_glb = n
-            p_glb = p
 
         else
             print '(A)', trim(file_path)//' is missing. Exiting ...'
@@ -143,10 +131,6 @@ contains
         ! Generic loop iterators
         integer :: i, j
 
-        integer :: bub_fac !for allowing an extra fluid_pp if there are bubbles
-
-        bub_fac = 0
-        if (bubbles .and. (num_fluids == 1)) bub_fac = 1
 
         ! Logistics ========================================================
         file_path = trim(case_dir)//'/.'
@@ -166,30 +150,12 @@ contains
         end if
 #endif
 
-#ifndef MFC_cuTENSOR
-        if (cu_tensor) then
-            print '(A)', 'Unsupported value of cu_tensor. MFC was not built '// &
-                'with the NVIDIA cuTENSOR library. Exiting ...'
-            call s_mpi_abort()
-        end if
-#endif
-
         ! Computational Domain Parameters ==================================
         if (m <= 0) then
             print '(A)', 'Unsupported value of m. Exiting ...'
             call s_mpi_abort()
         elseif (n < 0) then
             print '(A)', 'Unsupported value of n. Exiting ...'
-            call s_mpi_abort()
-        elseif (p < 0) then
-            print '(A)', 'Unsupported value of p. Exiting ...'
-            call s_mpi_abort()
-        elseif (cyl_coord .and. p > 0 .and. mod(p, 2) /= 1) then
-            print '(A)', 'Unsupported value of p. Exiting ...'
-            call s_mpi_abort()
-        elseif (n == 0 .and. p > 0) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'n and p. Exiting ...'
             call s_mpi_abort()
         elseif (dt <= 0) then
             print '(A)', 'Unsupported value of dt. Exiting ...'
@@ -211,90 +177,10 @@ contains
         ! ==================================================================
 
         ! Simulation Algorithm Parameters ==================================
-        if (all(model_eqns /= (/1, 2, 3, 4/))) then
-            print '(A)', 'Unsupported value of model_eqns. Exiting ...'
-            call s_mpi_abort()
-        elseif (model_eqns == 2 .and. bubbles .and. bubble_model == 1) then
-            print '(A)', 'The 5-equation bubbly flow model requires bubble_model = 2 (Keller--Miksis)'
-            call s_mpi_abort()
-        elseif (bubbles .and. nb < 1) then
-            print '(A)', 'The Ensemble-Averaged Bubble Model requires nb >= 1'
-            call s_mpi_abort()
-        elseif (bubbles .and. bubble_model == 3 .and. (polytropic .neqv. .true.)) then
-            print '(A)', 'RP bubbles require polytropic compression'
-            call s_mpi_abort()
-        elseif (cyl_coord .and. bubbles) then
-            print '(A)', 'Bubble models untested in cylindrical coordinates'
-            call s_mpi_abort()
-        elseif (model_eqns == 3 .and. bubbles) then
-            print '(A)', 'Bubble models untested with 6-equation model'
-            call s_mpi_abort()
-        elseif (model_eqns == 1 .and. bubbles) then
-            print '(A)', 'Bubble models untested with pi-gamma model'
-            call s_mpi_abort()
-        elseif (model_eqns == 4 .and. num_fluids /= 1) then
-            print '(A)', 'The 4-equation model implementation is not a multi-component and requires num_fluids = 1'
-            call s_mpi_abort()
-        elseif (bubbles .and. weno_vars /= 2) then
-            print '(A)', 'Bubble modeling requires weno_vars = 2'
-            call s_mpi_abort()
-            !TODO: Comment this out when testing riemann with hll
-        elseif (bubbles .and. riemann_solver /= 2) then
-            print '(A)', 'Bubble modeling requires riemann_solver = 2'
-            call s_mpi_abort()
-        elseif ((bubbles .neqv. .true.) .and. polydisperse) then
-            print '(A)', 'Polydisperse bubble modeling requires the bubble switch to be activated'
-            call s_mpi_abort()
-        elseif (polydisperse .and. (poly_sigma == dflt_real)) then
-            print '(A)', 'Polydisperse bubble modeling requires poly_sigma > 0'
-            call s_mpi_abort()
-        elseif (qbmm .and. (bubbles .neqv. .true.)) then
-            print '(A)', 'QBMM requires bubbles'
-            call s_mpi_abort()
-        elseif (qbmm .and. (nnode /= 4)) then
-            print '(A)', 'nnode not supported'
-            call s_mpi_abort()
-        elseif (model_eqns == 3 .and. riemann_solver /= 2) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'model_eqns (6-eq) and riemann_solver (please use riemann_solver = 2). '// &
-                'Exiting ...'
-            call s_mpi_abort()
-        elseif (model_eqns == 3 .and. avg_state == 1) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'model_eqns (6-eq) and Roe average (please use avg_state = 2). '// &
-                'Exiting ...'
-            call s_mpi_abort()
-       elseif (bubbles .and. avg_state == 1) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'bubbles and Roe average (please use avg_state = 2). '// &
-                'Exiting ...'
-            call s_mpi_abort()
-        elseif (model_eqns == 3 .and. wave_speeds == 2) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'model_eqns (6-eq) and wave_speeds (please use wave_speeds = 1). '// &
-                'Exiting ...'
-            call s_mpi_abort()
-        elseif (model_eqns == 3 .and. (cyl_coord .and. p /= 0)) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'model_eqns (6-eq) and cylindrical coordinates. '// &
-                'Exiting ...'
-            call s_mpi_abort()
-        elseif (num_fluids /= dflt_int &
+        if (num_fluids /= dflt_int &
                 .and. &
                 (num_fluids < 1 .or. num_fluids > num_fluids)) then
             print '(A)', 'Unsupported value of num_fluids. Exiting ...'
-            call s_mpi_abort()
-        elseif ((model_eqns == 1 .and. num_fluids /= dflt_int) &
-                .or. &
-                (model_eqns == 2 .and. num_fluids == dflt_int)) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'model_eqns and num_fluids. '// &
-                'Exiting ...'
-            call s_mpi_abort()
-        elseif (model_eqns == 1 .and. adv_alphan) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'model_eqns and adv_alphan. '// &
-                'Exiting ...'
             call s_mpi_abort()
         elseif (time_stepper < 1 .or. time_stepper > 5) then
             if (time_stepper /= 23) then
@@ -315,21 +201,8 @@ contains
             print '(A)', 'Unsupported combination of values of '// &
                 'n and weno_order. Exiting ...'
             call s_mpi_abort()
-        elseif (p + 1 < min(1, p)*num_stcls_min*weno_order) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'p and weno_order. Exiting ...'
-            call s_mpi_abort()
         elseif (weno_eps <= 0d0 .or. weno_eps > 1d-6) then
             print '(A)', 'Unsupported value of weno_eps. Exiting ...'
-            call s_mpi_abort()
-        elseif (weno_order == 1 .and. mapped_weno) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'weno_order and mapped_weno. '// &
-                'Exiting ...'
-            call s_mpi_abort()
-        elseif (weno_order /= 5 .and. mp_weno) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'weno_order and mp_weno. Exiting ...'
             call s_mpi_abort()
         elseif (riemann_solver < 1 .or. riemann_solver > 3) then
             print '(A)', 'Unsupported value of riemann_solver. Exiting ...'
@@ -364,15 +237,6 @@ contains
             print '(A)', 'Unsupported combination of values of '// &
                 'bc_x%beg and bc_x%end. Exiting ...'
             call s_mpi_abort()
-        elseif (bc_y%beg /= dflt_int &
-                .and. &
-                (((cyl_coord .neqv. .true.) .and. (bc_y%beg < -12 .or. bc_y%beg > -1)) &
-                 .or. &
-                 (cyl_coord .and. p == 0 .and. bc_y%beg /= -2) &
-                 .or. &
-                 (cyl_coord .and. p > 0 .and. bc_y%beg /= -13))) then
-            print '(A)', 'Unsupported value of bc_y%beg. Exiting ...'
-            call s_mpi_abort()
         elseif (bc_y%end /= dflt_int &
                 .and. &
                 (bc_y%end < -12 .or. bc_y%end > -1)) then
@@ -396,34 +260,6 @@ contains
             print '(A)', 'Unsupported combination of values of '// &
                 'bc_y%beg and bc_y%end. Exiting ...'
             call s_mpi_abort()
-        elseif (bc_z%beg /= dflt_int &
-                .and. &
-                (bc_z%beg < -12 .or. bc_z%beg > -1)) then
-            print '(A)', 'Unsupported value of bc_z%beg. Exiting ...'
-            call s_mpi_abort()
-        elseif (bc_z%end /= dflt_int &
-                .and. &
-                (bc_z%end < -12 .or. bc_z%end > -1)) then
-            print '(A)', 'Unsupported value of bc_z%end. Exiting ...'
-            call s_mpi_abort()
-        elseif ((p == 0 .and. bc_z%beg /= dflt_int) &
-                .or. &
-                (p > 0 .and. bc_z%beg == dflt_int)) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'p and bc_z%beg. Exiting ...'
-            call s_mpi_abort()
-        elseif ((p == 0 .and. bc_z%end /= dflt_int) &
-                .or. &
-                (p > 0 .and. bc_z%end == dflt_int)) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'p and bc_z%end. Exiting ...'
-            call s_mpi_abort()
-        elseif ((bc_z%beg == -1 .and. bc_z%end /= -1) &
-                .or. &
-                (bc_z%end == -1 .and. bc_z%beg /= -1)) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'bc_z%beg and bc_z%end. Exiting ...'
-            call s_mpi_abort()
         end if
         ! END: Simulation Algorithm Parameters =============================
 
@@ -439,11 +275,6 @@ contains
                 'values for probe_wrt, and fd_order. '// &
                 'Exiting ...'
             call s_mpi_abort()
-        elseif (integral_wrt .and. (bubbles .neqv. .true.)) then
-            print '(A)', 'Unsupported choice of the combination of '// &
-                'values for integral_wrt, and bubbles. '// &
-                'Exiting ...'
-            call s_mpi_abort()
         end if
         ! END: Finite Difference Parameters ================================
 
@@ -457,23 +288,6 @@ contains
                     'fluid_pp(', i, ')%'// &
                     'gamma. Exiting ...'
                 call s_mpi_abort()
-            elseif (model_eqns == 1 &
-                    .and. &
-                    fluid_pp(i)%gamma /= dflt_real) then
-                print '(A,I0,A)', 'Unsupported combination '// &
-                    'of values of model_eqns '// &
-                    'and fluid_pp(', i, ')%'// &
-                    'gamma. Exiting ...'
-                call s_mpi_abort()
-            elseif ((i <= num_fluids + bub_fac .and. fluid_pp(i)%gamma <= 0d0) &
-                    .or. &
-                    (i > num_fluids + bub_fac .and. fluid_pp(i)%gamma /= dflt_real)) &
-                then
-                print '(A,I0,A)', 'Unsupported combination '// &
-                    'of values of num_fluids '// &
-                    'and fluid_pp(', i, ')%'// &
-                    'gamma. Exiting ...'
-                call s_mpi_abort()
             elseif (fluid_pp(i)%pi_inf /= dflt_real &
                     .and. &
                     fluid_pp(i)%pi_inf < 0d0) then
@@ -481,42 +295,14 @@ contains
                     'fluid_pp(', i, ')%'// &
                     'pi_inf. Exiting ...'
                 call s_mpi_abort()
-            elseif (model_eqns == 1 &
-                    .and. &
-                    fluid_pp(i)%pi_inf /= dflt_real) then
-                print '(A,I0,A)', 'Unsupported combination '// &
-                    'of values of model_eqns '// &
-                    'and fluid_pp(', i, ')%'// &
-                    'pi_inf. Exiting ...'
-                call s_mpi_abort()
-            elseif ((i <= num_fluids + bub_fac .and. fluid_pp(i)%pi_inf < 0d0) &
-                    .or. &
-                    (i > num_fluids + bub_fac .and. fluid_pp(i)%pi_inf /= dflt_real)) &
-                then
-                print '(A,I0,A)', 'Unsupported combination '// &
-                    'of values of num_fluids '// &
-                    'and fluid_pp(', i, ')%'// &
-                    'pi_inf. Exiting ...'
-                call s_mpi_abort()
             end if
 
             do j = 1, 2
-
                 if (fluid_pp(i)%Re(j) /= dflt_real &
                     .and. &
                     fluid_pp(i)%Re(j) <= 0d0) then
                     print '(A,I0,A,I0,A)', 'Unsupported value of '// &
                         'fluid_pp(', i, ')%'// &
-                        'Re(', j, '). Exiting ...'
-                    call s_mpi_abort()
-                end if
-
-                if (model_eqns == 1 &
-                    .and. &
-                    fluid_pp(i)%Re(j) /= dflt_real) then
-                    print '(A,I0,A,I0,A)', 'Unsupported combination '// &
-                        'of values of model_eqns '// &
-                        'and fluid_pp(', i, ')%'// &
                         'Re(', j, '). Exiting ...'
                     call s_mpi_abort()
                 end if
@@ -616,65 +402,24 @@ contains
         end if
         ! ==================================================================
 
-        ! Cell-boundary Locations in z-direction ===========================
-        if (p > 0) then
+        ! ==================================================================
 
-            file_path = trim(t_step_dir)//'/z_cb.dat'
-
+        ! Cell-average Conservative Variables ==============================
+        do i = 1, adv_idx%end
+            write (file_path, '(A,I0,A)') &
+                trim(t_step_dir)//'/q_cons_vf', i, '.dat'
             inquire (FILE=trim(file_path), EXIST=file_exist)
-
             if (file_exist) then
                 open (2, FILE=trim(file_path), &
                       FORM='unformatted', &
                       ACTION='read', &
                       STATUS='old')
-                read (2) z_cb(-1:p); close (2)
+                read (2) q_cons_vf(i)%sf(0:m, 0:n); close (2)
             else
                 print '(A)', trim(file_path)//' is missing. Exiting ...'
                 call s_mpi_abort()
             end if
-
-            dz(0:p) = z_cb(0:p) - z_cb(-1:p - 1)
-            z_cc(0:p) = z_cb(-1:p - 1) + dz(0:p)/2d0
-
-        end if
-        ! ==================================================================
-
-        ! Cell-average Conservative Variables ==============================
-        if ((bubbles .neqv. .true.) .and. (hypoelasticity .neqv. .true.)) then
-            do i = 1, adv_idx%end
-                write (file_path, '(A,I0,A)') &
-                    trim(t_step_dir)//'/q_cons_vf', i, '.dat'
-                inquire (FILE=trim(file_path), EXIST=file_exist)
-                if (file_exist) then
-                    open (2, FILE=trim(file_path), &
-                          FORM='unformatted', &
-                          ACTION='read', &
-                          STATUS='old')
-                    read (2) q_cons_vf(i)%sf(0:m, 0:n, 0:p); close (2)
-                else
-                    print '(A)', trim(file_path)//' is missing. Exiting ...'
-                    call s_mpi_abort()
-                end if
-            end do
-        else
-            !make sure to read bubble variables
-            do i = 1, sys_size
-                write (file_path, '(A,I0,A)') &
-                    trim(t_step_dir)//'/q_cons_vf', i, '.dat'
-                inquire (FILE=trim(file_path), EXIST=file_exist)
-                if (file_exist) then
-                    open (2, FILE=trim(file_path), &
-                          FORM='unformatted', &
-                          ACTION='read', &
-                          STATUS='old')
-                    read (2) q_cons_vf(i)%sf(0:m, 0:n, 0:p); close (2)
-                else
-                    print '(A)', trim(file_path)//' is missing. Exiting ...'
-                    call s_mpi_abort()
-                end if
-            end do
-        end if
+        end do
         ! ==================================================================
 
     end subroutine s_read_serial_data_files ! -------------------------------------
@@ -688,12 +433,12 @@ contains
 
 #ifdef MFC_MPI
 
-        real(kind(0d0)), allocatable, dimension(:) :: x_cb_glb, y_cb_glb, z_cb_glb
+        real(kind(0d0)), allocatable, dimension(:) :: x_cb_glb, y_cb_glb
 
         integer :: ifile, ierr, data_size
         integer, dimension(MPI_STATUS_SIZE) :: status
         integer(KIND=MPI_OFFSET_KIND) :: disp
-        integer(KIND=MPI_OFFSET_KIND) :: m_MOK, n_MOK, p_MOK
+        integer(KIND=MPI_OFFSET_KIND) :: m_MOK, n_MOK
         integer(KIND=MPI_OFFSET_KIND) :: WP_MOK, var_MOK, str_MOK
         integer(KIND=MPI_OFFSET_KIND) :: NVARS_MOK
         integer(KIND=MPI_OFFSET_KIND) :: MOK
@@ -705,7 +450,6 @@ contains
 
         allocate (x_cb_glb(-1:m_glb))
         allocate (y_cb_glb(-1:n_glb))
-        allocate (z_cb_glb(-1:p_glb))
 
         ! Read in cell boundary locations in x-direction
         file_loc = trim(case_dir)//'/restart_data'//trim(mpiiofs)//'x_cb.dat'
@@ -750,29 +494,6 @@ contains
             ! Computing the cell center locations
             y_cc(0:n) = y_cb(-1:n - 1) + dy(0:n)/2d0
 
-            if (p > 0) then
-                ! Read in cell boundary locations in z-direction
-                file_loc = trim(case_dir)//'/restart_data'//trim(mpiiofs)//'z_cb.dat'
-                inquire (FILE=trim(file_loc), EXIST=file_exist)
-
-                if (file_exist) then
-                    data_size = p_glb + 2
-                    call MPI_FILE_OPEN(MPI_COMM_WORLD, file_loc, MPI_MODE_RDONLY, mpi_info_int, ifile, ierr)
-                    call MPI_FILE_READ(ifile, z_cb_glb, data_size, MPI_DOUBLE_PRECISION, status, ierr)
-                    call MPI_FILE_CLOSE(ifile, ierr)
-                else
-                    print '(A)', 'File ', trim(file_loc), ' is missing. Exiting...'
-                    call s_mpi_abort()
-                end if
-
-                ! Assigning local cell boundary locations
-                z_cb(-1:p) = z_cb_glb((start_idx(3) - 1):(start_idx(3) + p))
-                ! Computing the cell width distribution
-                dz(0:p) = z_cb(0:p) - z_cb(-1:p - 1)
-                ! Computing the cell center locations
-                z_cc(0:p) = z_cb(-1:p - 1) + dz(0:p)/2d0
-
-            end if
         end if
 
         ! Open the file to read conservative variables
@@ -787,43 +508,28 @@ contains
             call s_initialize_mpi_data(q_cons_vf)
 
             ! Size of local arrays
-            data_size = (m + 1)*(n + 1)*(p + 1)
+            data_size = (m + 1)*(n + 1)
 
             ! Resize some integers so MPI can read even the biggest file
             m_MOK = int(m_glb + 1, MPI_OFFSET_KIND)
             n_MOK = int(n_glb + 1, MPI_OFFSET_KIND)
-            p_MOK = int(p_glb + 1, MPI_OFFSET_KIND)
             WP_MOK = int(8d0, MPI_OFFSET_KIND)
             MOK = int(1d0, MPI_OFFSET_KIND)
             str_MOK = int(name_len, MPI_OFFSET_KIND)
             NVARS_MOK = int(sys_size, MPI_OFFSET_KIND)
 
             ! Read the data for each variable
-            if (bubbles .or. hypoelasticity) then
+            do i = 1, adv_idx%end
+                var_MOK = int(i, MPI_OFFSET_KIND)
 
-                do i = 1, sys_size!adv_idx%end
-                    var_MOK = int(i, MPI_OFFSET_KIND)
-                    ! Initial displacement to skip at beginning of file
-                    disp = m_MOK*max(MOK, n_MOK)*max(MOK, p_MOK)*WP_MOK*(var_MOK - 1)
+                ! Initial displacement to skip at beginning of file
+                disp = m_MOK*max(MOK, n_MOK)*WP_MOK*(var_MOK - 1)
 
-                    call MPI_FILE_SET_VIEW(ifile, disp, MPI_DOUBLE_PRECISION, MPI_IO_DATA%view(i), &
-                                           'native', mpi_info_int, ierr)
-                    call MPI_FILE_READ(ifile, MPI_IO_DATA%var(i)%sf, data_size, &
-                                       MPI_DOUBLE_PRECISION, status, ierr)
-                end do
-            else
-                do i = 1, adv_idx%end
-                    var_MOK = int(i, MPI_OFFSET_KIND)
-
-                    ! Initial displacement to skip at beginning of file
-                    disp = m_MOK*max(MOK, n_MOK)*max(MOK, p_MOK)*WP_MOK*(var_MOK - 1)
-
-                    call MPI_FILE_SET_VIEW(ifile, disp, MPI_DOUBLE_PRECISION, MPI_IO_DATA%view(i), &
-                                           'native', mpi_info_int, ierr)
-                    call MPI_FILE_READ(ifile, MPI_IO_DATA%var(i)%sf, data_size, &
-                                       MPI_DOUBLE_PRECISION, status, ierr)
-                end do
-            end if
+                call MPI_FILE_SET_VIEW(ifile, disp, MPI_DOUBLE_PRECISION, MPI_IO_DATA%view(i), &
+                                       'native', mpi_info_int, ierr)
+                call MPI_FILE_READ(ifile, MPI_IO_DATA%var(i)%sf, data_size, &
+                                   MPI_DOUBLE_PRECISION, status, ierr)
+            end do
 
             call s_mpi_barrier()
 
@@ -833,7 +539,7 @@ contains
             call s_mpi_abort()
         end if
 
-        deallocate (x_cb_glb, y_cb_glb, z_cb_glb)
+        deallocate (x_cb_glb, y_cb_glb)
 
 #endif
 
@@ -981,117 +687,7 @@ contains
 
         ! END: Population of Buffers in y-direction ========================
 
-        ! Population of Buffers in z-direction =============================
-
-        ! Populating cell-width distribution buffer, at the beginning of the
-        ! coordinate direction, based on the selected boundary condition. In
-        ! order, these are the ghost-cell extrapolation, symmetry, periodic,
-        ! and processor boundary conditions.
-        if (p == 0) then
-            return
-        elseif (bc_z%beg <= -3) then
-            do i = 1, buff_size
-                dz(-i) = dz(0)
-            end do
-        elseif (bc_z%beg == -2) then
-            do i = 1, buff_size
-                dz(-i) = dz(i - 1)
-            end do
-        elseif (bc_z%beg == -1) then
-            do i = 1, buff_size
-                dz(-i) = dz(p - (i - 1))
-            end do
-        else
-            call s_mpi_sendrecv_grid_variables_buffers(3, -1)
-        end if
-
-        ! Computing the cell-boundary locations buffer, at the beginning of
-        ! the coordinate direction, from the cell-width distribution buffer
-        do i = 1, buff_size
-            z_cb(-1 - i) = z_cb(-i) - dz(-i)
-        end do
-        ! Computing the cell-center locations buffer, at the beginning of
-        ! the coordinate direction, from the cell-width distribution buffer
-        do i = 1, buff_size
-            z_cc(-i) = z_cc(1 - i) - (dz(1 - i) + dz(-i))/2d0
-        end do
-
-        ! Populating the cell-width distribution buffer, at the end of the
-        ! coordinate direction, based on desired boundary condition. These
-        ! include, in order, ghost-cell extrapolation, symmetry, periodic,
-        ! and processor boundary conditions.
-        if (bc_z%end <= -3) then
-            do i = 1, buff_size
-                dz(p + i) = dz(p)
-            end do
-        elseif (bc_z%end == -2) then
-            do i = 1, buff_size
-                dz(p + i) = dz(p - (i - 1))
-            end do
-        elseif (bc_z%end == -1) then
-            do i = 1, buff_size
-                dz(p + i) = dz(i - 1)
-            end do
-        else
-            call s_mpi_sendrecv_grid_variables_buffers(3, 1)
-        end if
-
-        ! Populating the cell-boundary locations buffer, at the end of the
-        ! coordinate direction, from buffer of the cell-width distribution
-        do i = 1, buff_size
-            z_cb(p + i) = z_cb(p + (i - 1)) + dz(p + i)
-        end do
-        ! Populating the cell-center locations buffer, at the end of the
-        ! coordinate direction, from buffer of the cell-width distribution
-        do i = 1, buff_size
-            z_cc(p + i) = z_cc(p + (i - 1)) + (dz(p + (i - 1)) + dz(p + i))/2d0
-        end do
-
-        ! END: Population of Buffers in z-direction ========================
-
     end subroutine s_populate_grid_variables_buffers ! ---------------------
-
-    !> The purpose of this procedure is to initialize the
-        !!      values of the internal-energy equations of each phase
-        !!      from the mass of each phase, the mixture momentum and
-        !!      mixture-total-energy equations.
-        !! @param v_vf conservative variables
-    subroutine s_initialize_internal_energy_equations(v_vf) !---------------
-
-        type(scalar_field), dimension(sys_size), intent(INOUT) :: v_vf
-        real(kind(0d0)) :: rho
-        real(kind(0d0)) :: dyn_pres
-        real(kind(0d0)) :: gamma
-        real(kind(0d0)) :: pi_inf
-        real(kind(0d0)), dimension(2) :: Re
-        real(kind(0d0)) :: pres
-
-        integer :: i, j, k, l
-
-        do j = 0, m
-            do k = 0, n
-                do l = 0, p
-
-                    call s_convert_to_mixture_variables(v_vf, j, k, l, rho, gamma, pi_inf, Re)
-
-                    dyn_pres = 0d0
-                    do i = mom_idx%beg, mom_idx%end
-                        dyn_pres = dyn_pres + 5d-1*v_vf(i)%sf(j, k, l)*v_vf(i)%sf(j, k, l) &
-                                   /max(rho, sgm_eps)
-                    end do
-
-                    pres = (v_vf(E_idx)%sf(j, k, l) - dyn_pres - pi_inf)/gamma
-
-                    do i = 1, num_fluids
-                        v_vf(i + internalEnergies_idx%beg - 1)%sf(j, k, l) = v_vf(i + adv_idx%beg - 1)%sf(j, k, l)* &
-                                                                             (fluid_pp(i)%gamma*pres + fluid_pp(i)%pi_inf)
-                    end do
-
-                end do
-            end do
-        end do
-
-    end subroutine s_initialize_internal_energy_equations !-----------------
 
     subroutine s_initialize_start_up_module() !-----------------------------
 
