@@ -122,9 +122,7 @@ contains
         ! Constraints on the geometric parameters of the line segment patch
         if (n > 0 .or. patch_icpp(patch_id)%length_x <= 0d0 &
             .or. &
-            patch_icpp(patch_id)%x_centroid == dflt_real &
-            .or. &
-            cyl_coord) then
+            patch_icpp(patch_id)%x_centroid == dflt_real ) then
 
             print '(A,I0,A)', 'Inconsistency(ies) detected in '// &
                 'geometric parameters of line segment '// &
@@ -481,10 +479,8 @@ contains
              .and. &
              patch_icpp(patch_id)%pi_inf > 0) &
             .or. &
-            (model_eqns == 2 &
-             .and. &
-             (any(patch_icpp(patch_id)%alpha_rho(1:num_fluids) < 0d0) &
-              ))) then
+            (any(patch_icpp(patch_id)%alpha_rho(1:num_fluids) < 0d0) &
+              )) then
 
             print '(A,I0,A)', 'Inconsistency(ies) detected in '// &
                 'primitive variables of active '// &
@@ -493,7 +489,7 @@ contains
 
         end if
 
-        if (model_eqns == 2 .and. num_fluids < num_fluids) then
+        if (num_fluids < num_fluids) then
 
             if (any(patch_icpp(patch_id)%alpha_rho(num_fluids + 1:) &
                     /= dflt_real) &

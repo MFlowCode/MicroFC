@@ -212,7 +212,7 @@ contains
         integer :: ifile, ierr, data_size
         integer, dimension(MPI_STATUS_SIZE) :: status
         integer(KIND=MPI_OFFSET_KIND) :: disp
-        integer(KIND=MPI_OFFSET_KIND) :: m_MOK, n_MOK, p_MOK
+        integer(KIND=MPI_OFFSET_KIND) :: m_MOK, n_MOK
         integer(KIND=MPI_OFFSET_KIND) :: WP_MOK, var_MOK, str_MOK
         integer(KIND=MPI_OFFSET_KIND) :: NVARS_MOK
         integer(KIND=MPI_OFFSET_KIND) :: MOK
@@ -242,7 +242,6 @@ contains
         ! Resize some integers so MPI can write even the biggest files
         m_MOK = int(m_glb + 1, MPI_OFFSET_KIND)
         n_MOK = int(n_glb + 1, MPI_OFFSET_KIND)
-        p_MOK = int(p_glb + 1, MPI_OFFSET_KIND)
         WP_MOK = int(8d0, MPI_OFFSET_KIND)
         MOK = int(1d0, MPI_OFFSET_KIND)
         str_MOK = int(name_len, MPI_OFFSET_KIND)
@@ -254,7 +253,7 @@ contains
             var_MOK = int(i, MPI_OFFSET_KIND)
 
             ! Initial displacement to skip at beginning of file
-            disp = m_MOK*max(MOK, n_MOK)*max(MOK, p_MOK)*WP_MOK*(var_MOK - 1)
+            disp = m_MOK*max(MOK, n_MOK)*WP_MOK*(var_MOK - 1)
 
             call MPI_FILE_SET_VIEW(ifile, disp, MPI_DOUBLE_PRECISION, MPI_IO_DATA%view(i), &
                                    'native', mpi_info_int, ierr)

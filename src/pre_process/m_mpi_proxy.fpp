@@ -139,9 +139,9 @@ contains
         call MPI_BCAST(case_dir, len(case_dir), MPI_CHARACTER, 0, MPI_COMM_WORLD, ierr)
 
         #:for VAR in ['t_step_old', 'm', 'n', 'm_glb', 'n_glb',  &
-            & 'loops_x', 'loops_y',  'model_eqns', 'num_fluids',     &
+            & 'loops_x', 'loops_y',  'num_fluids',     &
             & 'weno_order', 'precision', & 
-            &  'num_patches' ]
+            & 'num_patches' ]
             call MPI_BCAST(${VAR}$, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 

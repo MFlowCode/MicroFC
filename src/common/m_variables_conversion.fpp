@@ -321,7 +321,7 @@ contains
 #endif
 
 
-!$acc update device(dt, sys_size, pref, rhoref, gamma_idx, pi_inf_idx, E_idx, avg_state, num_fluids, model_eqns, num_dims, nb, weight, grid_geometry, mapped_weno, mp_weno, weno_eps)
+!$acc update device(dt, sys_size, pref, rhoref, gamma_idx, pi_inf_idx, E_idx, avg_state, num_fluids, num_dims, nb, weight, grid_geometry, mapped_weno, mp_weno, weno_eps)
 !$acc update device(gam)
 
 #ifdef MFC_POST_PROCESS
@@ -595,8 +595,7 @@ contains
                                                                 alpha_K, alpha_rho_K, Re_K, j, k)
 
                 ! Computing the energy from the pressure
-                E_K = gamma_K*pres_K + pi_inf_K &
-                      + 5d-1*rho_K*vel_K_sum
+                E_K = gamma_K*pres_K + pi_inf_K + 5d-1*rho_K*vel_K_sum
 
                 ! mass flux, this should be \alpha_i \rho_i u_i
 !$acc loop seq
@@ -615,27 +614,10 @@ contains
                 ! energy flux, u(E+p)
                 FK_vf(j, k, E_idx) = vel_K(dir_idx(1))*(E_K + pres_K)
 
-                ! have been using == 2
-                if (riemann_solver == 1) then
-!$acc loop seq
-                    do i = advxb, advxe
-                        FK_vf(j, k, i) = 0d0
-                        FK_src_vf(j, k, i) = alpha_K(i - E_idx)
-                    end do
-
-                else
-                    ! Could be bubbles!
-!$acc loop seq
-                    do i = advxb, advxe
-                        FK_vf(j, k, i) = vel_K(dir_idx(1))*alpha_K(i - E_idx)
-                    end do
-
-!$acc loop seq
-                    do i = advxb, advxe
-                        FK_src_vf(j, k, i) = vel_K(dir_idx(1))
-                    end do
-
-                end if
+                !$acc loop seq
+                do i = advxb, advxe
+                    FK_src_vf(j, k, i) = vel_K(dir_idx(1))
+                end do
             end do
         end do
 #endif

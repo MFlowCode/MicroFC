@@ -83,7 +83,6 @@ module m_global_parameters
     ! ==========================================================================
 
     ! Simulation Algorithm Parameters ==========================================
-    integer :: model_eqns     !< Multicomponent flow model
     #:if MFC_CASE_OPTIMIZATION
         integer, parameter :: num_dims = ${num_dims}$       !< Number of spatial dimensions
     #:else
@@ -103,10 +102,7 @@ module m_global_parameters
     #:endif
 
     real(kind(0d0)) :: weno_eps       !< Binding for the WENO nonlinear weights
-    logical :: mapped_weno    !< WENO with mapping of nonlinear weights
-    logical :: mp_weno        !< Monotonicity preserving (MP) WENO
     logical :: weno_Re_flux   !< WENO reconstruct velocity gradients for viscous stress tensor
-    integer :: riemann_solver !< Riemann solver algorithm
     integer :: wave_speeds    !< Wave speeds estimation method
     integer :: avg_state      !< Average state evaluation method
     logical :: null_weights   !< Null undesired WENO weights
@@ -117,7 +113,7 @@ module m_global_parameters
         !$acc declare create(num_dims, weno_polyn, weno_order)
     #:endif
 
-!$acc declare create(num_fluids, model_eqns, avg_state, mapped_weno, mp_weno, weno_eps)
+!$acc declare create(num_fluids, avg_state, weno_eps)
 
     !> @name Boundary conditions (BC) in the x-, y- and z-directions, respectively
     !> @{
@@ -184,7 +180,7 @@ module m_global_parameters
 
     integer :: startx, starty
 
-!$acc declare create(sys_size, buff_size, startx, starty, E_idx, gamma_idx, pi_inf_idx, alf_idx)
+!$acc declare create(sys_size, buff_size, startx, starty, E_idx, gamma_idx, pi_inf_idx)
 
     ! END: Simulation Algorithm Parameters =====================================
 
@@ -257,16 +253,12 @@ contains
         t_step_save = dflt_int
 
         ! Simulation algorithm parameters
-        model_eqns = dflt_int
         num_fluids = dflt_int
         adv_alphan = .false.
         time_stepper = dflt_int
         weno_vars = dflt_int
         weno_eps = dflt_real
-        mapped_weno = .false.
-        mp_weno = .false.
         weno_Re_flux = .false.
-        riemann_solver = dflt_int
         wave_speeds = dflt_int
         avg_state = dflt_int
         null_weights = .false.

@@ -91,13 +91,13 @@ contains
             t_step_old, m, n, x_domain, y_domain, &
             stretch_x, stretch_y, a_x, a_y, &
             x_a, y_a, x_b, y_b, &
-            model_eqns, num_fluids, &
+            num_fluids, &
             adv_alphan, mpp_lim, &
             weno_order, bc_x, bc_y, num_patches, &
             patch_icpp, fluid_pp, &
             precision, parallel_io, &
             fluid_rho, &
-            cyl_coord, loops_x, loops_y
+            loops_x, loops_y
 
         ! Inquiring the status of the pre_process.inp file
         file_loc = 'pre_process.inp'
@@ -203,43 +203,41 @@ contains
             call s_mpi_abort()
         end if
 
-        if (cyl_coord .neqv. .true.) then ! Cartesian coordinates
 
-            ! Constraints on domain boundaries locations in the y-direction
-            if ((n == 0 .and. y_domain%beg /= dflt_real) &
+        ! Constraints on domain boundaries locations in the y-direction
+        if ((n == 0 .and. y_domain%beg /= dflt_real) &
+            .or. &
+            (n > 0 &
+             .and. &
+             ((old_grid .and. y_domain%beg /= dflt_real) &
+              .or. &
+              ((old_grid .neqv. .true.) .and. &
+               y_domain%beg == dflt_real)))) then
+            print '(A)', 'Unsupported choice of the combination of '// &
+                'values for old_grid, n and y_domain%beg. '// &
+                'Exiting ...'
+            call s_mpi_abort()
+        elseif ((n == 0 .and. y_domain%end /= dflt_real) &
                 .or. &
                 (n > 0 &
                  .and. &
-                 ((old_grid .and. y_domain%beg /= dflt_real) &
+                 ((old_grid .and. y_domain%end /= dflt_real) &
                   .or. &
                   ((old_grid .neqv. .true.) .and. &
-                   y_domain%beg == dflt_real)))) then
-                print '(A)', 'Unsupported choice of the combination of '// &
-                    'values for old_grid, n and y_domain%beg. '// &
-                    'Exiting ...'
-                call s_mpi_abort()
-            elseif ((n == 0 .and. y_domain%end /= dflt_real) &
-                    .or. &
-                    (n > 0 &
-                     .and. &
-                     ((old_grid .and. y_domain%end /= dflt_real) &
-                      .or. &
-                      ((old_grid .neqv. .true.) .and. &
-                       y_domain%end == dflt_real)))) then
-                print '(A)', 'Unsupported choice of the combination of '// &
-                    'values for old_grid, n and y_domain%end. '// &
-                    'Exiting ...'
-                call s_mpi_abort()
-            elseif (n > 0 &
-                    .and. &
-                    (old_grid .neqv. .true.) &
-                    .and. &
-                    y_domain%beg >= y_domain%end) then
-                print '(A)', 'Unsupported choice of the combination of '// &
-                    'values for old_grid, n, y_domain%beg and '// &
-                    'y_domain%end. Exiting ...'
-                call s_mpi_abort()
-            end if
+                   y_domain%end == dflt_real)))) then
+            print '(A)', 'Unsupported choice of the combination of '// &
+                'values for old_grid, n and y_domain%end. '// &
+                'Exiting ...'
+            call s_mpi_abort()
+        elseif (n > 0 &
+                .and. &
+                (old_grid .neqv. .true.) &
+                .and. &
+                y_domain%beg >= y_domain%end) then
+            print '(A)', 'Unsupported choice of the combination of '// &
+                'values for old_grid, n, y_domain%beg and '// &
+                'y_domain%end. Exiting ...'
+            call s_mpi_abort()
         end if
 
         ! Constraints on the grid stretching in the x-direction
@@ -339,20 +337,11 @@ contains
             call s_mpi_abort()
 
             ! Constraints on the grid stretching in the z-direction
-        elseif (all(model_eqns /= (/ 2 /))) then
-            print '(A)', 'Unsupported value of model_eqns. Exiting ...'
-            call s_mpi_abort()
         elseif (num_fluids /= dflt_int &
                 .and. &
                 (num_fluids < 1 .or. num_fluids > num_fluids)) then
             print '(A)', 'Unsupported value of num_fluids. Exiting ...'
             call s_mpi_abort()
-        elseif (model_eqns == 1 .and. adv_alphan) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'model_eqns and adv_alphan. '// &
-                'Exiting ...'
-            call s_mpi_abort()
-            ! Constraints on the order of the WENO scheme
         elseif (weno_order /= 1 .and. weno_order /= 3 &
                 .and. &
                 weno_order /= 5) then
@@ -467,14 +456,6 @@ contains
                     fluid_pp(i)%pi_inf < 0d0) then
                 print '(A,I0,A)', 'Unsupported value of '// &
                     'fluid_pp(', i, ')%'// &
-                    'pi_inf. Exiting ...'
-                call s_mpi_abort()
-            elseif (model_eqns == 1 &
-                    .and. &
-                    fluid_pp(i)%pi_inf /= dflt_real) then
-                print '(A,I0,A)', 'Unsupported combination '// &
-                    'of values of model_eqns '// &
-                    'and fluid_pp(', i, ')%'// &
                     'pi_inf. Exiting ...'
                 call s_mpi_abort()
             elseif ((i <= num_fluids .and. fluid_pp(i)%pi_inf < 0d0) &

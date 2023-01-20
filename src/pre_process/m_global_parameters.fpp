@@ -38,14 +38,9 @@ module m_global_parameters
     integer :: m
     integer :: n
 
-    integer :: m_glb, n_glb, p_glb !<
-    !! Global number of cells in each direction
+    integer :: m_glb, n_glb
 
     integer :: num_dims !< Number of spatial dimensions
-
-    logical :: cyl_coord
-    integer :: grid_geometry !<
-    !! Cylindrical coordinates (either axisymmetric or full 3D)
 
     real(kind(0d0)), allocatable, dimension(:) :: x_cc, y_cc !<
     !! Locations of cell-centers (cc) in x-, y- and z-directions, respectively
@@ -74,13 +69,11 @@ module m_global_parameters
     ! ==========================================================================
 
     ! Simulation Algorithm Parameters ==========================================
-    integer :: model_eqns      !< Multicomponent flow model
     integer :: num_fluids      !< Number of different fluids present in the flow
     logical :: adv_alphan      !< Advection of the last volume fraction
     logical :: mpp_lim         !< Alpha limiter
     integer :: sys_size        !< Number of unknowns in the system of equations
     integer :: weno_order      !< Order of accuracy for the WENO reconstruction
-    logical :: hypoelasticity  !< activate hypoelasticity
 
     ! Annotations of the structure, i.e. the organization, of the state vectors
     type(int_bounds_info) :: cont_idx                   !< Indexes of first & last continuity eqns.
@@ -168,8 +161,6 @@ contains
         ! Computational domain parameters
         m = dflt_int; n = 0; 
 
-        cyl_coord = .false.
-
         x_domain%beg = dflt_real
         x_domain%end = dflt_real
         y_domain%beg = dflt_real
@@ -188,12 +179,9 @@ contains
         y_b = dflt_real
 
         ! Simulation algorithm parameters
-        model_eqns = dflt_int
         num_fluids = dflt_int
         adv_alphan = .false.
         weno_order = dflt_int
-
-        hypoelasticity = .false.
 
         bc_x%beg = dflt_int
         bc_x%end = dflt_int
@@ -290,10 +278,6 @@ contains
         ! Allocating grid variables for the y- and z-directions
         if (n > 0) then
             allocate (y_cc(0:n), y_cb(-1:n))
-        end if
-
-        if (cyl_coord .neqv. .true.) then ! Cartesian grid
-            grid_geometry = 1
         end if
 
         allocate (logic_grid(0:m, 0:n))

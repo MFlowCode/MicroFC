@@ -77,8 +77,7 @@ contains
             num_fluids, adv_alphan, &
             time_stepper, weno_vars, &
             weno_eps, weno_flat, riemann_flat, cu_mpi, &
-            mapped_weno, &
-            riemann_solver, wave_speeds, avg_state, &
+            wave_speeds, avg_state, &
             bc_x, bc_y, &
             fluid_pp, probe_wrt, &
             fd_order, probe, num_probes, t_step_old, &
@@ -204,26 +203,11 @@ contains
         elseif (weno_eps <= 0d0 .or. weno_eps > 1d-6) then
             print '(A)', 'Unsupported value of weno_eps. Exiting ...'
             call s_mpi_abort()
-        elseif (riemann_solver < 1 .or. riemann_solver > 3) then
-            print '(A)', 'Unsupported value of riemann_solver. Exiting ...'
-            call s_mpi_abort()
         elseif (all(wave_speeds /= (/dflt_int, 1, 2/))) then
             print '(A)', 'Unsupported value of wave_speeds. Exiting ...'
             call s_mpi_abort()
-        elseif ((riemann_solver /= 3 .and. wave_speeds == dflt_int) &
-                .or. &
-                (riemann_solver == 3 .and. wave_speeds /= dflt_int)) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'riemann_solver and wave_speeds. '// &
-                'Exiting ...'
-            call s_mpi_abort()
         elseif (all(avg_state /= (/dflt_int, 1, 2/))) then
             print '(A)', 'Unsupported value of avg_state. Exiting ...'
-            call s_mpi_abort()
-        elseif (riemann_solver /= 3 .and. avg_state == dflt_int) then
-            print '(A)', 'Unsupported combination of values of '// &
-                'riemann_solver and avg_state. '// &
-                'Exiting ...'
             call s_mpi_abort()
         elseif (bc_x%beg < -12 .or. bc_x%beg > -1) then
             print '(A)', 'Unsupported value of bc_x%beg. Exiting ...'

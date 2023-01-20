@@ -101,29 +101,13 @@ contains
         ! Grid Generation in the y-direction ===============================
         if (n == 0) return
 
-        if (grid_geometry == 2 .and. y_domain%beg == 0.0d0) then
-            !IF (grid_geometry == 2) THEN
+        dy = (y_domain%end - y_domain%beg)/real(n + 1, kind(0d0))
 
-            dy = (y_domain%end - y_domain%beg)/real(2*n + 1, kind(0d0))
+        do i = 0, n
+            y_cc(i) = y_domain%beg + 5d-1*dy*real(2*i + 1, kind(0d0))
+            y_cb(i - 1) = y_domain%beg + dy*real(i, kind(0d0))
+        end do
 
-            y_cc(0) = y_domain%beg + 5d-1*dy
-            y_cb(-1) = y_domain%beg
-
-            do i = 1, n
-                y_cc(i) = y_domain%beg + 2d0*dy*real(i, kind(0d0))
-                y_cb(i - 1) = y_domain%beg + dy*real(2*i - 1, kind(0d0))
-            end do
-
-        else
-
-            dy = (y_domain%end - y_domain%beg)/real(n + 1, kind(0d0))
-
-            do i = 0, n
-                y_cc(i) = y_domain%beg + 5d-1*dy*real(2*i + 1, kind(0d0))
-                y_cb(i - 1) = y_domain%beg + dy*real(i, kind(0d0))
-            end do
-
-        end if
 
         y_cb(n) = y_domain%end
 
@@ -213,18 +197,11 @@ contains
         ! Grid generation in the y-direction
         if (n_glb > 0) then
 
-            if (grid_geometry == 2 .and. y_domain%beg == 0.0d0) then
-                dy = (y_domain%end - y_domain%beg)/real(2*n_glb + 1, kind(0d0))
-                y_cb_glb(-1) = y_domain%beg
-                do i = 1, n_glb
-                    y_cb_glb(i - 1) = y_domain%beg + dy*real(2*i - 1, kind(0d0))
-                end do
-            else
-                dy = (y_domain%end - y_domain%beg)/real(n_glb + 1, kind(0d0))
-                do i = 0, n_glb
-                    y_cb_glb(i - 1) = y_domain%beg + dy*real(i, kind(0d0))
-                end do
-            end if
+            dy = (y_domain%end - y_domain%beg)/real(n_glb + 1, kind(0d0))
+            do i = 0, n_glb
+                y_cb_glb(i - 1) = y_domain%beg + dy*real(i, kind(0d0))
+            end do
+
             y_cb_glb(n_glb) = y_domain%end
             if (stretch_y) then
                 length = abs(y_cb_glb(n_glb) - y_cb_glb(-1))

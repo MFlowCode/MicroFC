@@ -182,8 +182,8 @@ contains
         call MPI_BCAST(case_dir, len(case_dir), MPI_CHARACTER, 0, MPI_COMM_WORLD, ierr)
 
         #:for VAR in ['t_step_old', 'm', 'n', 'm_glb', 'n_glb',   &
-            & 't_step_start','t_step_stop','t_step_save','model_eqns',         &
-            & 'num_fluids','time_stepper', 'weno_vars', 'riemann_solver',      & 
+            & 't_step_start','t_step_stop','t_step_save',         &
+            & 'num_fluids','time_stepper', 'weno_vars',       & 
             & 'wave_speeds', 'avg_state', 'precision', 'bc_x%beg', 'bc_x%end', & 
             & 'bc_y%beg', 'bc_y%end', 'bc_x_glb%beg',  & 
             & 'bc_x_glb%end', 'bc_y_glb%beg', 'bc_y_glb%end',  &
@@ -192,7 +192,7 @@ contains
         #:endfor
 
         #:for VAR in [ 'run_time_info', 'adv_alphan',    &
-            & 'mapped_weno', 'mp_weno', 'cu_mpi',  &
+            & 'cu_mpi',  &
             & 'weno_Re_flux', 'null_weights',  &
             & 'parallel_io', &
             & 'probe_wrt' ]
