@@ -21,11 +21,7 @@ module m_time_steppers
 
     use m_data_output          !< Run-time info & solution data output procedures
 
-    use m_bubbles              !< Bubble dynamics routines
-
     use m_mpi_proxy            !< Message passing interface (MPI) module proxy
-
-    use m_fftw
 
     use m_nvtx
     ! ==========================================================================
@@ -72,20 +68,9 @@ contains
         ix%beg = -buff_size; ix%end = m + buff_size
 
         if (n > 0) then
-
             iy%beg = -buff_size; iy%end = n + buff_size
-
-            if (p > 0) then
-                iz%beg = -buff_size; iz%end = p + buff_size
-            else
-                iz%beg = 0; iz%end = 0
-            end if
-
         else
-
             iy%beg = 0; iy%end = 0
-            iz%beg = 0; iz%end = 0
-
         end if
 
         ! Allocating the cell-average conservative variables
@@ -98,8 +83,7 @@ contains
         do i = 1, num_ts
             do j = 1, sys_size
                 @:ALLOCATE(q_cons_ts(i)%vf(j)%sf(ix%beg:ix%end, &
-                                                iy%beg:iy%end, &
-                                                iz%beg:iz%end))
+                                                iy%beg:iy%end ))
             end do
         end do
 
@@ -114,8 +98,7 @@ contains
             do i = 0, 3
                 do j = 1, sys_size
                     @:ALLOCATE(q_prim_ts(i)%vf(j)%sf(ix%beg:ix%end, &
-                                                    iy%beg:iy%end, &
-                                                    iz%beg:iz%end))
+                                                    iy%beg:iy%end ))
                 end do
             end do
         end if
@@ -125,40 +108,14 @@ contains
         
         do i = 1, adv_idx%end
             @:ALLOCATE(q_prim_vf(i)%sf(ix%beg:ix%end, &
-                                      iy%beg:iy%end, &
-                                      iz%beg:iz%end))
+                                      iy%beg:iy%end ))
         end do
-
-        if (bubbles) then
-            do i = bub_idx%beg, bub_idx%end
-                @:ALLOCATE(q_prim_vf(i)%sf(ix%beg:ix%end, &
-                                          iy%beg:iy%end, &
-                                          iz%beg:iz%end))
-            end do
-        end if
-
-        if (hypoelasticity) then
-
-            do i = stress_idx%beg, stress_idx%end
-                @:ALLOCATE(q_prim_vf(i)%sf(ix%beg:ix%end, &
-                                          iy%beg:iy%end, &
-                                          iz%beg:iz%end))
-            end do
-        end if
-
-        if (model_eqns == 3) then
-            do i = internalEnergies_idx%beg, internalEnergies_idx%end
-                @:ALLOCATE(q_prim_vf(i)%sf(ix%beg:ix%end, &
-                                          iy%beg:iy%end, &
-                                          iz%beg:iz%end))
-            end do
-        end if
 
         ! Allocating the cell-average RHS variables
         @:ALLOCATE(rhs_vf(1:sys_size))
 
         do i = 1, sys_size
-            @:ALLOCATE(rhs_vf(i)%sf(0:m, 0:n, 0:p))
+            @:ALLOCATE(rhs_vf(i)%sf(0:m, 0:n))
         end do
 
         ! Opening and writing the header of the run-time information file
@@ -204,17 +161,15 @@ contains
 
         if (t_step == t_step_stop) return
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
         do i = 1, sys_size
-            do l = 0, p
                 do k = 0, n
                     do j = 0, m
-                        q_cons_ts(1)%vf(i)%sf(j, k, l) = &
-                            q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                            + dt*rhs_vf(i)%sf(j, k, l)
+                        q_cons_ts(1)%vf(i)%sf(j, k) = &
+                            q_cons_ts(1)%vf(i)%sf(j, k) &
+                            + dt*rhs_vf(i)%sf(j, k)
                     end do
                 end do
-            end do
         end do
 
         !print *, q_cons_ts(1)%vf(cont_idx%beg)%sf(102,0,0)
@@ -266,17 +221,15 @@ contains
 
         if (t_step == t_step_stop) return
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
         do i = 1, sys_size
-            do l = 0, p
                 do k = 0, n
                     do j = 0, m
-                        q_cons_ts(2)%vf(i)%sf(j, k, l) = &
-                            q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                            + dt*rhs_vf(i)%sf(j, k, l)
+                        q_cons_ts(2)%vf(i)%sf(j, k) = &
+                            q_cons_ts(1)%vf(i)%sf(j, k) &
+                            + dt*rhs_vf(i)%sf(j, k)
                     end do
                 end do
-            end do
         end do
 
 
@@ -286,18 +239,16 @@ contains
 
         call s_compute_rhs(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, t_step)
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
         do i = 1, sys_size
-            do l = 0, p
                 do k = 0, n
                     do j = 0, m
-                        q_cons_ts(1)%vf(i)%sf(j, k, l) = &
-                            (q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                             + q_cons_ts(2)%vf(i)%sf(j, k, l) &
-                             + dt*rhs_vf(i)%sf(j, k, l))/2d0
+                        q_cons_ts(1)%vf(i)%sf(j, k) = &
+                            (q_cons_ts(1)%vf(i)%sf(j, k) &
+                             + q_cons_ts(2)%vf(i)%sf(j, k) &
+                             + dt*rhs_vf(i)%sf(j, k))/2d0
                     end do
                 end do
-            end do
         end do
 
 
@@ -323,7 +274,7 @@ contains
         integer, intent(IN) :: t_step
         real(kind(0d0)), intent(INOUT) :: time_avg
 
-        integer :: i, j, k, l !< Generic loop iterator
+        integer :: i, j, k !< Generic loop iterator
         real(kind(0d0)) :: start, finish
 
         ! Stage 1 of 3 =====================================================
@@ -345,17 +296,15 @@ contains
 
         if (t_step == t_step_stop) return
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
         do i = 1, sys_size
-            do l = 0, p
                 do k = 0, n
                     do j = 0, m
-                        q_cons_ts(2)%vf(i)%sf(j, k, l) = &
-                            q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                            + dt*rhs_vf(i)%sf(j, k, l)
+                        q_cons_ts(2)%vf(i)%sf(j, k) = &
+                            q_cons_ts(1)%vf(i)%sf(j, k) &
+                            + dt*rhs_vf(i)%sf(j, k)
                     end do
                 end do
-            end do
         end do
 
 
@@ -367,18 +316,16 @@ contains
         call s_compute_rhs(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, t_step)
 !        call s_compute_rhs_full(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, t_step)
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
         do i = 1, sys_size
-            do l = 0, p
                 do k = 0, n
                     do j = 0, m
-                        q_cons_ts(2)%vf(i)%sf(j, k, l) = &
-                            (3d0*q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                             + q_cons_ts(2)%vf(i)%sf(j, k, l) &
-                             + dt*rhs_vf(i)%sf(j, k, l))/4d0
+                        q_cons_ts(2)%vf(i)%sf(j, k) = &
+                            (3d0*q_cons_ts(1)%vf(i)%sf(j, k) &
+                             + q_cons_ts(2)%vf(i)%sf(j, k) &
+                             + dt*rhs_vf(i)%sf(j, k))/4d0
                     end do
                 end do
-            end do
         end do
 
 
@@ -389,18 +336,16 @@ contains
         call s_compute_rhs(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, t_step)
 !        call s_compute_rhs_full(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, t_step)
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
         do i = 1, sys_size
-            do l = 0, p
                 do k = 0, n
                     do j = 0, m
-                        q_cons_ts(1)%vf(i)%sf(j, k, l) = &
-                            (q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                             + 2d0*q_cons_ts(2)%vf(i)%sf(j, k, l) &
-                             + 2d0*dt*rhs_vf(i)%sf(j, k, l))/3d0
+                        q_cons_ts(1)%vf(i)%sf(j, k) = &
+                            (q_cons_ts(1)%vf(i)%sf(j, k) &
+                             + 2d0*q_cons_ts(2)%vf(i)%sf(j, k) &
+                             + 2d0*dt*rhs_vf(i)%sf(j, k))/3d0
                     end do
                 end do
-            end do
         end do
 
         call nvtxEndRange
@@ -432,26 +377,26 @@ contains
 
         if (t_step == t_step_start) then
             do i = 1, sys_size
-                q_prim_ts(3)%vf(i)%sf(:, :, :) = q_prim_vf(i)%sf(:, :, :)
+                q_prim_ts(3)%vf(i)%sf(:, :) = q_prim_vf(i)%sf(:, :)
             end do
         elseif (t_step == t_step_start + 1) then
             do i = 1, sys_size
-                q_prim_ts(2)%vf(i)%sf(:, :, :) = q_prim_vf(i)%sf(:, :, :)
+                q_prim_ts(2)%vf(i)%sf(:, :) = q_prim_vf(i)%sf(:, :)
             end do
         elseif (t_step == t_step_start + 2) then
             do i = 1, sys_size
-                q_prim_ts(1)%vf(i)%sf(:, :, :) = q_prim_vf(i)%sf(:, :, :)
+                q_prim_ts(1)%vf(i)%sf(:, :) = q_prim_vf(i)%sf(:, :)
             end do
         elseif (t_step == t_step_start + 3) then
             do i = 1, sys_size
-                q_prim_ts(0)%vf(i)%sf(:, :, :) = q_prim_vf(i)%sf(:, :, :)
+                q_prim_ts(0)%vf(i)%sf(:, :) = q_prim_vf(i)%sf(:, :)
             end do
         else ! All other timesteps
             do i = 1, sys_size
-                q_prim_ts(3)%vf(i)%sf(:, :, :) = q_prim_ts(2)%vf(i)%sf(:, :, :)
-                q_prim_ts(2)%vf(i)%sf(:, :, :) = q_prim_ts(1)%vf(i)%sf(:, :, :)
-                q_prim_ts(1)%vf(i)%sf(:, :, :) = q_prim_ts(0)%vf(i)%sf(:, :, :)
-                q_prim_ts(0)%vf(i)%sf(:, :, :) = q_prim_vf(i)%sf(:, :, :)
+                q_prim_ts(3)%vf(i)%sf(:, :) = q_prim_ts(2)%vf(i)%sf(:, :)
+                q_prim_ts(2)%vf(i)%sf(:, :) = q_prim_ts(1)%vf(i)%sf(:, :)
+                q_prim_ts(1)%vf(i)%sf(:, :) = q_prim_ts(0)%vf(i)%sf(:, :)
+                q_prim_ts(0)%vf(i)%sf(:, :) = q_prim_vf(i)%sf(:, :)
             end do
         end if
 
@@ -490,24 +435,6 @@ contains
         do i = 1, adv_idx%end
             @:DEALLOCATE(q_prim_vf(i)%sf)
         end do
-
-        if (hypoelasticity) then
-            do i = stress_idx%beg, stress_idx%end
-                @:DEALLOCATE(q_prim_vf(i)%sf)
-            end do
-        end if
-
-        if (bubbles) then
-            do i = bub_idx%beg, bub_idx%end
-                @:DEALLOCATE(q_prim_vf(i)%sf)
-            end do
-        end if
-
-        if (model_eqns == 3) then
-            do i = internalEnergies_idx%beg, internalEnergies_idx%end
-                @:DEALLOCATE(q_prim_vf(i)%sf)
-            end do
-        end if
 
         @:DEALLOCATE(q_prim_vf)
 

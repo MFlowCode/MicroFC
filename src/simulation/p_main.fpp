@@ -31,8 +31,6 @@ program p_main
 
     use m_riemann_solvers      !< Exact and approximate Riemann problem solvers
 
-    use m_monopole             !< Monopole calculations
-
     use m_rhs                  !< Right-hand-side (RHS) evaluation procedures
 
     use m_data_output          !< Run-time info & solution data output procedures
@@ -111,7 +109,7 @@ program p_main
         call s_read_input_file()
         call s_check_input_file()
 
-        print '(" Simulating a "I0"x"I0"x"I0" case on "I0" rank(s)")', m, n, p, num_procs
+        print '(" Simulating a "I0"x"I0"x"I0" case on "I0" rank(s)")', m, n, num_procs
     end if
 
     ! Broadcasting the user inputs to all of the processors and performing the
@@ -136,15 +134,10 @@ program p_main
     call s_initialize_start_up_module()
     call s_initialize_riemann_solvers_module()
 
-
-
 #if defined(_OPENACC) && defined(MFC_MEMORY_DUMP)
     call acc_present_dump()
 #endif // defined(_OPENACC) && defined(MFC_MEMORY_DUMP)
 
-    if (monopole) then
-        call s_initialize_monopole_module()
-    end if
     if (any(Re_size > 1)) then
         call s_initialize_viscous_module()
     end if
@@ -173,7 +166,6 @@ program p_main
 
     ! Reading in the user provided initial condition and grid data
     call s_read_data_files(q_cons_ts(1)%vf)
-    if (model_eqns == 3) call s_initialize_internal_energy_equations(q_cons_ts(1)%vf)
 
     ! Populating the buffers of the grid variables using the boundary conditions
     call s_populate_grid_variables_buffers()
@@ -194,7 +186,7 @@ program p_main
     allocate (proc_time(0:num_procs - 1))
     allocate (io_proc_time(0:num_procs - 1))
 
-!$acc update device(dt, dx, dy, dz, x_cc, y_cc, x_cb, y_cb)
+!$acc update device(dt, dx, dy, x_cc, y_cc, x_cb, y_cb)
 !$acc update device(sys_size, buff_size)
 !$acc update device(m, n)
     do i = 1, sys_size
@@ -302,15 +294,13 @@ program p_main
             call cpu_time(start)
             !  call nvtxStartRange("I/O")
             do i = 1, sys_size
-!$acc update host(q_cons_ts(1)%vf(i)%sf)
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            if(ieee_is_nan(q_cons_ts(1)%vf(i)%sf(j, k, l))) then
-                                print *, j, k, l, proc_rank, t_step, m, n, p
-                                STOP "Error"
-                            end if
-                        end do
+                !$acc update host(q_cons_ts(1)%vf(i)%sf)
+                do k = 0, n
+                    do j = 0, m
+                        if(ieee_is_nan(q_cons_ts(1)%vf(i)%sf(j, k))) then
+                            print *, j, k, proc_rank, t_step, m, n
+                            STOP "Error"
+                        end if
                     end do
                 end do
             end do
