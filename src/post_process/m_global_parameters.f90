@@ -133,7 +133,6 @@ module m_global_parameters
 
     integer :: format !< Format of the database file(s)
 
-    logical :: coarsen_silo
 
     integer :: precision !< Floating point precision of the database file(s)
 
@@ -153,30 +152,10 @@ module m_global_parameters
     !! conservative variables, speed of sound, the vorticity,
     !! and the numerical Schlieren function.
     !> @{
-    logical, dimension(num_fluids_max) :: alpha_rho_wrt
-    logical :: rho_wrt
-    logical, dimension(3) :: mom_wrt
-    logical, dimension(3) :: vel_wrt
-    integer :: flux_lim
-    logical, dimension(3) :: flux_wrt
-    logical :: E_wrt
-    logical :: pres_wrt
-    logical, dimension(num_fluids_max) :: alpha_wrt
-    logical :: gamma_wrt
-    logical :: heat_ratio_wrt
-    logical :: pi_inf_wrt
-    logical :: pres_inf_wrt
     logical :: prim_vars_wrt
     logical :: cons_vars_wrt
-    logical :: c_wrt
-    logical, dimension(3) :: omega_wrt
+    logical, dimension(2) :: omega_wrt
     logical :: schlieren_wrt
-    !> @}
-
-    !> @name Options for Fourier decomposition in the azimuthal direction if 3D
-    !! cylindrical coordinates are used
-    !> @{
-    logical :: fourier_decomp
     !> @}
 
     real(kind(0d0)), dimension(num_fluids_max) :: schlieren_alpha    !<
@@ -248,31 +227,13 @@ contains
 
         precision = dflt_int
 
-        coarsen_silo = .false.
-
-        alpha_rho_wrt = .false.
-        rho_wrt = .false.
-        mom_wrt = .false.
-        vel_wrt = .false.
-        flux_lim = dflt_int
-        flux_wrt = .false.
         parallel_io = .false.
-        E_wrt = .false.
-        pres_wrt = .false.
-        alpha_wrt = .false.
-        gamma_wrt = .false.
-        heat_ratio_wrt = .false.
-        pi_inf_wrt = .false.
-        pres_inf_wrt = .false.
         prim_vars_wrt = .false.
         cons_vars_wrt = .false.
-        c_wrt = .false.
         omega_wrt = .false.
         schlieren_wrt = .false.
 
         schlieren_alpha = dflt_real
-
-        fourier_decomp = .false.
 
         fd_order = dflt_int
 
@@ -301,7 +262,6 @@ contains
         adv_idx%end = E_idx + num_fluids
 
         sys_size = adv_idx%end
-
 
         momxb = mom_idx%beg
         momxe = mom_idx%end
@@ -372,13 +332,6 @@ contains
 
         end if
 
-        if (coarsen_silo) then
-            allocate (coarse_x_cb(-1 - offset_x%beg:(m/2) + offset_x%end))
-            if (n > 0) then
-                allocate (coarse_y_cb(-1 - offset_y%beg:(n/2) + offset_y%end))
-            end if
-        end if
-
     end subroutine s_initialize_global_parameters_module ! --------------------
 
 
@@ -429,13 +382,6 @@ contains
 
             deallocate (x_root_cb, x_root_cc)
 
-        end if
-
-        if (coarsen_silo) then
-            deallocate (coarse_x_cb)
-            if (n > 0) then
-                deallocate (coarse_y_cb)
-            end if
         end if
 
         deallocate (proc_coords)

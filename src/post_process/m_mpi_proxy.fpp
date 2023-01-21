@@ -233,19 +233,11 @@ contains
             call MPI_BCAST(${VAR}$, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 
-        #:for VAR in [ 'parallel_io', 'rho_wrt',    &
-            & 'coarsen_silo', 'E_wrt', 'pres_wrt', 'gamma_wrt',                & 
-            & 'heat_ratio_wrt', 'pi_inf_wrt', 'pres_inf_wrt', 'cons_vars_wrt', & 
-            & 'prim_vars_wrt', 'c_wrt', 'schlieren_wrt', 'fourier_decomp' ]
+        #:for VAR in [ 'parallel_io', 'cons_vars_wrt',  'prim_vars_wrt', 'schlieren_wrt'  ]
             call MPI_BCAST(${VAR}$, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 
-        call MPI_BCAST(flux_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
         call MPI_BCAST(omega_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-        call MPI_BCAST(mom_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-        call MPI_BCAST(vel_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-        call MPI_BCAST(alpha_rho_wrt(1), num_fluids_max, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-        call MPI_BCAST(alpha_wrt(1), num_fluids_max, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
 
         do i = 1, num_fluids_max
             call MPI_BCAST(fluid_pp(i)%gamma, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
@@ -1103,11 +1095,11 @@ contains
     subroutine s_mpi_defragment_1d_flow_variable(q_sf, q_root_sf) ! --------
 
         real(kind(0d0)), &
-            dimension(0:m, 0:0, 0:0), &
+            dimension(0:m, 0:0), &
             intent(IN) :: q_sf
 
         real(kind(0d0)), &
-            dimension(0:m_root, 0:0, 0:0), &
+            dimension(0:m_root, 0:0), &
             intent(INOUT) :: q_root_sf
 
 #ifdef MFC_MPI
@@ -1115,8 +1107,8 @@ contains
         ! Gathering the sub-domain flow variable data from all the processes
         ! and putting it back together for the entire computational domain
         ! on the process with rank 0
-        call MPI_GATHERV(q_sf(0, 0, 0), m + 1, MPI_DOUBLE_PRECISION, &
-                         q_root_sf(0, 0, 0), recvcounts, displs, &
+        call MPI_GATHERV(q_sf(0, 0), m + 1, MPI_DOUBLE_PRECISION, &
+                         q_root_sf(0, 0), recvcounts, displs, &
                          MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
 
 #endif

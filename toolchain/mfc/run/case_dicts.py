@@ -84,11 +84,8 @@ for f_id in range(1,10+1):
 
 POST_PROCESS = COMMON + [
     't_step_start', 't_step_stop', 't_step_save', 
-    'format', 'coarsen_silo', 'fourier_decomp',
-    'fourier_modes%beg', 'fourier_modes%end', 'alpha_rho_wrt', 'rho_wrt',
-    'mom_wrt', 'vel_wrt', 'flux_lim', 'flux_wrt', 'E_wrt', 'pres_wrt',
-    'alpha_wrt', 'kappa_wrt', 'gamma_wrt', 'heat_ratio_wrt', 'pi_inf_wrt',
-    'pres_inf_wrt', 'cons_vars_wrt', 'prim_vars_wrt', 'c_wrt', 'omega_wrt',
+    'format', 'fourier_modes%beg', 'fourier_modes%end', 
+    'cons_vars_wrt', 'prim_vars_wrt', 'omega_wrt',
     'schlieren_wrt', 'schlieren_alpha', 'fd_order'
 ]
 
@@ -98,11 +95,11 @@ for cmp_id in range(1,2+1):
     POST_PROCESS.append(f'bc_{cmp}%beg')
     POST_PROCESS.append(f'bc_{cmp}%end')
 
-    for attribute in ["mom_wrt", "vel_wrt", "flux_wrt", "omega_wrt"]:
+    for attribute in ["omega_wrt"]:
         POST_PROCESS.append(f'{attribute}({cmp_id})')
 
 for fl_id in range(1,10+1):
-    for append in ["schlieren_alpha", "alpha_rho_wrt", "alpha_wrt", "kappa_wrt"]:
+    for append in ["schlieren_alpha"]:
         POST_PROCESS.append(f'{append}({fl_id})')
 
     for attribute in ["gamma", "pi_inf"]:

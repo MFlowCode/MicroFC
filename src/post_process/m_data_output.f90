@@ -24,11 +24,11 @@ module m_data_output
     implicit none
 
     private; public :: s_initialize_data_output_module, &
- s_open_formatted_database_file, &
- s_write_grid_to_formatted_database_file, &
- s_write_variable_to_formatted_database_file, &
- s_close_formatted_database_file, &
- s_finalize_data_output_module
+     s_open_formatted_database_file, &
+     s_write_grid_to_formatted_database_file, &
+     s_write_variable_to_formatted_database_file, &
+     s_close_formatted_database_file, &
+     s_finalize_data_output_module
 
     ! Including the Silo Fortran interface library that features the subroutines
     ! and parameters that are required to write in the Silo-HDF5 database format
@@ -249,74 +249,37 @@ contains
 
             ! Partial densities
             do i = 1, num_fluids
-                if (alpha_rho_wrt(i) &
-                    .or. &
-                    (cons_vars_wrt .or. prim_vars_wrt)) then
+                if (cons_vars_wrt .or. prim_vars_wrt) then
                     dbvars = dbvars + 1
                 end if
             end do
 
-            ! Density
-            if (rho_wrt) then
-                dbvars = dbvars + 1
-            end if
-
             ! Momentum
             do i = 1, E_idx - mom_idx%beg
-                if (mom_wrt(i) .or. cons_vars_wrt) dbvars = dbvars + 1
+                if (cons_vars_wrt) dbvars = dbvars + 1
             end do
 
             ! Velocity
             do i = 1, E_idx - mom_idx%beg
-                if (vel_wrt(i) .or. prim_vars_wrt) dbvars = dbvars + 1
-            end do
-
-            ! Flux limiter function
-            do i = 1, E_idx - mom_idx%beg
-                if (flux_wrt(i)) dbvars = dbvars + 1
+                if (prim_vars_wrt) dbvars = dbvars + 1
             end do
 
             ! Energy
-            if (E_wrt .or. cons_vars_wrt) dbvars = dbvars + 1
+            if (cons_vars_wrt) dbvars = dbvars + 1
 
             ! Pressure
-            if (pres_wrt .or. prim_vars_wrt) dbvars = dbvars + 1
+            if (prim_vars_wrt) dbvars = dbvars + 1
 
             ! Volume fraction(s)
             do i = 1, num_fluids - 1
-                if (alpha_wrt(i) &
-                    .or. &
-                    (cons_vars_wrt .or. prim_vars_wrt)) then
+                if (cons_vars_wrt .or. prim_vars_wrt) then
                     dbvars = dbvars + 1
                 end if
             end do
 
-            if (alpha_wrt(num_fluids) &
-                .or. &
-                (cons_vars_wrt .or. prim_vars_wrt)) &
-                then
+            if (cons_vars_wrt .or. prim_vars_wrt) then
                 dbvars = dbvars + 1
             end if
-
-
-            ! Specific heat ratio function
-            if (gamma_wrt ) then
-                dbvars = dbvars + 1
-            end if
-
-            ! Specific heat ratio
-            if (heat_ratio_wrt) dbvars = dbvars + 1
-
-            ! Liquid stiffness function
-            if (pi_inf_wrt ) then
-                dbvars = dbvars + 1
-            end if
-
-            ! Liquid stiffness
-            if (pres_inf_wrt) dbvars = dbvars + 1
-
-            ! Speed of sound
-            if (c_wrt) dbvars = dbvars + 1
 
             ! Vorticity
             if (n > 0) then
@@ -327,7 +290,6 @@ contains
 
             ! Numerical Schlieren function
             if (schlieren_wrt) dbvars = dbvars + 1
-
         end if
 
         ! END: Querying Number of Flow Variable(s) in Binary Output ========
