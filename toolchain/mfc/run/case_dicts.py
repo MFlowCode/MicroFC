@@ -11,8 +11,7 @@ COMMON = [
 
 
 PRE_PROCESS = COMMON + [
-    'old_grid', 'old_ic', 't_step_old',
-    'fluid_rho', 'num_patches'
+    'old_grid', 'old_ic', 't_step_old', 'num_patches'
 ]
 
 for cmp in ["x", "y"]:
@@ -26,8 +25,6 @@ for cmp in ["x", "y"]:
     PRE_PROCESS.append(f"bc_{cmp}%end")
 
 for f_id in range(1, 10+1):
-    PRE_PROCESS.append(f'fluid_rho({f_id})')
-
     for attribute in ["gamma", "pi_inf"]:
         PRE_PROCESS.append(f"fluid_pp({f_id})%{attribute}")
 

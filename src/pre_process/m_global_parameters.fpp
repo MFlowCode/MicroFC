@@ -78,8 +78,6 @@ module m_global_parameters
     type(int_bounds_info) :: mom_idx                    !< Indexes of first & last momentum eqns.
     integer :: E_idx                      !< Index of total energy equation
     type(int_bounds_info) :: adv_idx                    !< Indexes of first & last advection eqns.
-    integer :: gamma_idx                  !< Index of specific heat ratio func. eqn.
-    integer :: pi_inf_idx                 !< Index of liquid stiffness func. eqn.
 
     type(int_bounds_info) :: bc_x, bc_y !<
     !! Boundary conditions in the x-, y- and z-coordinate directions
@@ -87,7 +85,6 @@ module m_global_parameters
     logical :: parallel_io !< Format of the data files
     integer :: precision !< Precision of output files
 
-    real(kind(0d0)), dimension(num_fluids_max) :: fluid_rho
 
     integer, allocatable, dimension(:) :: proc_coords !<
     !! Processor coordinates in MPI_CART_COMM
@@ -187,7 +184,6 @@ contains
 
         parallel_io = .false.
         precision = 2
-        fluid_rho = dflt_real
 
         ! Initial condition parameters
         num_patches = dflt_int

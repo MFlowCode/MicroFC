@@ -94,7 +94,6 @@ contains
             weno_order, bc_x, bc_y, num_patches, &
             patch_icpp, fluid_pp, &
             precision, parallel_io, &
-            fluid_rho, &
             loops_x, loops_y
 
         ! Inquiring the status of the pre_process.inp file

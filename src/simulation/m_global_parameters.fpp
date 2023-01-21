@@ -40,8 +40,8 @@ module m_global_parameters
     character(LEN=path_len) :: case_dir              !< Case folder location
     logical :: run_time_info         !< Run-time output flag
     integer :: t_step_old            !< Existing IC/grid folder
-    real(kind(0d0)), parameter :: small_alf = 1d-7 !< Small alf tolerance
     ! ==========================================================================
+
     ! Computational Domain Parameters ==========================================
     integer :: proc_rank !< Rank of the local processor
 
@@ -72,7 +72,7 @@ module m_global_parameters
 
     real(kind(0d0)) :: dt !< Size of the time-step
 
-!$acc declare create(x_cb, y_cb, x_cc, y_cc, dx, dy, dt, m, n)
+    !$acc declare create(x_cb, y_cb, x_cc, y_cc, dx, dy, dt, m, n)
 
     !> @name Starting time-step iteration, stopping time-step iteration and the number
     !! of time-step iterations between successive solution backups, respectively
@@ -112,7 +112,7 @@ module m_global_parameters
 
     !> @name Boundary conditions (BC) in the x-, y- and z-directions, respectively
     !> @{
-    type(int_bounds_info) :: bc_x, bc_y, bc_z
+    type(int_bounds_info) :: bc_x, bc_y
     type(int_bounds_info) :: bc_x_glb, bc_y_glb
     !> @}
 
@@ -258,7 +258,6 @@ contains
 
         bc_x%beg = dflt_int; bc_x%end = dflt_int
         bc_y%beg = dflt_int; bc_y%end = dflt_int
-        bc_z%beg = dflt_int; bc_z%end = dflt_int
 
         ! Fluids physical parameters
         do i = 1, num_fluids_max
