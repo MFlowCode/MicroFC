@@ -1,6 +1,6 @@
 # MicroFC
 
-A micro [MFC](mflowcode.github.io).
+A micro [MFC](https://mflowcode.github.io).
 
 Not tested just yet.
 
@@ -13,7 +13,7 @@ Intended use cases:
 	* Finite-volume WENO reconstruction
 	* HLLC Riemann solvers
 	* Large-scale OpenACC offloading of (multi-component) compressible fluid dynamics
-* Testbed for features going into [MFC](mflowcode.github.io) 
+* Testbed for features going into [MFC](https://mflowcode.github.io) 
 
 ## License
 
