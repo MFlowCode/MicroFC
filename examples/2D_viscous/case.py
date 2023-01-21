@@ -24,7 +24,6 @@ print(json.dumps({
     'x_domain%end'                 : 0.5,
     'y_domain%beg'                 : -0.5,
     'y_domain%end'                 : 0.5,
-    'cyl_coord'                    : 'F',
     'm'                            : 50,
     'n'                            : 50,
     'dt'                           : 5.E-10,
