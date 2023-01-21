@@ -89,7 +89,6 @@ module m_global_parameters
         integer :: num_dims       !< Number of spatial dimensions
     #:endif
     integer :: num_fluids     !< Number of fluids in the flow
-    logical :: adv_alphan     !< Advection of the last volume fraction
     integer :: time_stepper   !< Time-stepper algorithm
 
     #:if MFC_CASE_OPTIMIZATION
@@ -252,7 +251,6 @@ contains
 
         ! Simulation algorithm parameters
         num_fluids = dflt_int
-        adv_alphan = .false.
         time_stepper = dflt_int
         weno_eps = dflt_real
         weno_Re_flux = .false.

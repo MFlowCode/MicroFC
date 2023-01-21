@@ -74,12 +74,10 @@ contains
         ! Namelist of the global parameters which may be specified by user
         namelist /user_inputs/ case_dir, run_time_info, m, n, dt, &
             t_step_start, t_step_stop, t_step_save, &
-            num_fluids, adv_alphan, &
-            time_stepper, &
+            num_fluids, time_stepper, &
             weno_eps, weno_flat, riemann_flat, cu_mpi, &
             wave_speeds, avg_state, &
-            bc_x, bc_y, &
-            fluid_pp, probe_wrt, &
+            bc_x, bc_y, fluid_pp, probe_wrt, &
             fd_order, probe, num_probes, t_step_old, &
             weno_Re_flux, &
 #:if not MFC_CASE_OPTIMIZATION

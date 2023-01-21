@@ -92,7 +92,6 @@ contains
             stretch_x, stretch_y, a_x, a_y, &
             x_a, y_a, x_b, y_b, &
             num_fluids, &
-            adv_alphan, mpp_lim, &
             weno_order, bc_x, bc_y, num_patches, &
             patch_icpp, fluid_pp, &
             precision, parallel_io, &

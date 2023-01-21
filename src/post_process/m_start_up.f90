@@ -33,23 +33,17 @@ contains
             !! is or is not present in the designated location
 
         ! Namelist for all of the parameters to be inputed by the user
-        namelist /user_inputs/ case_dir, m, n, p, t_step_start, &
-            t_step_stop, t_step_save, model_eqns, &
+        namelist /user_inputs/ case_dir, m, n, t_step_start, &
+            t_step_stop, t_step_save, &
             num_fluids, mpp_lim, adv_alphan, &
             weno_order, bc_x, &
             bc_y, bc_z, fluid_pp, format, precision, &
-            hypoelasticity, G, &
             alpha_rho_wrt, rho_wrt, mom_wrt, vel_wrt, &
             E_wrt, pres_wrt, alpha_wrt, gamma_wrt, &
             heat_ratio_wrt, pi_inf_wrt, pres_inf_wrt, &
             cons_vars_wrt, prim_vars_wrt, c_wrt, &
-            omega_wrt, schlieren_wrt, schlieren_alpha, &
-            fd_order, mixture_err, alt_soundspeed, &
-            flux_lim, flux_wrt, cyl_coord, &
-            parallel_io, coarsen_silo, fourier_decomp, &
-            rhoref, pref, bubbles, R0ref, nb, &
-            polytropic, thermal, Ca, Web, Re_inv, &
-            polydisperse, poly_sigma
+            omega_wrt, schlieren_wrt, schlieren_alpha, fd_order, &
+            flux_wrt, parallel_io, coarsen_silo, fourier_decomp
 
         ! Inquiring the status of the post_process.inp file
         file_loc = 'post_process.inp'
@@ -65,7 +59,6 @@ contains
             ! Store m,n,p into global m,n,p
             m_glb = m
             n_glb = n
-            p_glb = p
         else
             print '(A)', 'File post_process.inp is missing. Exiting ...'
             call s_mpi_abort()
@@ -86,10 +79,7 @@ contains
             !! Logical variable used to test the existence of folders
 
         integer :: i  !< Generic loop iterator
-        integer :: bub_fac
 
-        bub_fac = 0; 
-        if (bubbles .and. (num_fluids == 1)) bub_fac = 1
 
         ! Checking the existence of the case folder
         case_dir = adjustl(case_dir)
@@ -419,10 +409,6 @@ contains
             print '(A)', 'Unsupported choice of the combination of '// &
                 'values for n and vel_wrt(3). Exiting ...'
             call s_mpi_abort()
-        elseif (p == 0 .and. vel_wrt(3)) then
-            print '(A)', 'Unsupported choice of the combination of '// &
-                'values for p and vel_wrt(3). Exiting ...'
-            call s_mpi_abort()
         end if
 
         ! Constraints on the post-processing of the flux limiter function
@@ -473,15 +459,6 @@ contains
             print '(A)', 'Unsupported choice of the combination of '// &
                 'values for n and omega_wrt(3). Exiting ...'
             call s_mpi_abort()
-        elseif (p == 0 .and. omega_wrt(1)) then
-            print '(A)', 'Unsupported choice of the combination of '// &
-                'values for p and omega_wrt(1). Exiting ...'
-            call s_mpi_abort()
-        elseif (p == 0 .and. omega_wrt(2)) then
-            print '(A)', 'Unsupported choice of the combination of '// &
-                'values for p and omega_wrt(2). Exiting ...'
-            call s_mpi_abort()
-
             ! Constraints on post-processing of numerical Schlieren function
         elseif (n == 0 .and. schlieren_wrt) then
             print '(A)', 'Unsupported choice of the combination of '// &
@@ -542,19 +519,6 @@ contains
             print '(A)', 'Unsupported choice for the value of '// &
                 'fd_order. Exiting ...'
             call s_mpi_abort()
-            !          ELSEIF(               (omega_wrt(1) .NEQV. .TRUE.)            &
-            !                                           .AND.                        &
-            !                                (omega_wrt(2) .NEQV. .TRUE.)            &
-            !                                           .AND.                        &
-            !                                (omega_wrt(3) .NEQV. .TRUE.)            &
-            !                                           .AND.                        &
-            !                                !(schlieren_wrt .NEQV. .TRUE.)           &
-            !                                !           .AND.                        &
-            !                                   fd_order /= dflt_int              ) THEN
-            !              PRINT '(A)', 'AA Unsupported choice of the combination of '    // &
-            !                           'values for omega_wrt, schlieren_wrt and '     // &
-            !                           'fd_order. Exiting ...'
-            !              CALL s_mpi_abort()
         elseif ((any(omega_wrt) .or. schlieren_wrt) &
                 .and. &
                 fd_order == dflt_int) then

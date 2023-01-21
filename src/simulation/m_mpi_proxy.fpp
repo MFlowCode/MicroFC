@@ -191,8 +191,7 @@ contains
             call MPI_BCAST(${VAR}$, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 
-        #:for VAR in [ 'run_time_info', 'adv_alphan',    &
-            & 'cu_mpi', 'weno_Re_flux', 'parallel_io', 'probe_wrt' ]
+        #:for VAR in [ 'run_time_info', 'cu_mpi', 'weno_Re_flux', 'parallel_io', 'probe_wrt' ]
             call MPI_BCAST(${VAR}$, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 
