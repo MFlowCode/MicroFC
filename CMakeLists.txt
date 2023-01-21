@@ -221,17 +221,6 @@ if (MFC_SIMULATION)
         target_link_libraries     (simulation PRIVATE MPI::MPI_Fortran)
     endif()
 
-    # === === === FFTW
-    if (MFC_OpenACC AND (CMAKE_Fortran_COMPILER_ID STREQUAL "NVHPC" OR CMAKE_Fortran_COMPILER_ID STREQUAL "PGI"))
-        find_package(CUDAToolkit REQUIRED)
-
-        target_link_libraries(simulation PRIVATE CUDA::cudart CUDA::cufft)
-    else()
-        find_package(FFTW REQUIRED)
-
-        target_link_libraries(simulation PRIVATE FFTW::FFTW)
-    endif()
-
     if (MFC_OpenACC)
         find_package(OpenACC)
 
@@ -288,11 +277,10 @@ endif()
 if (MFC_POST_PROCESS)
     add_executable(post_process ${post_process_SRCs})
 
-    find_package(FFTW REQUIRED)
     find_package(SILO REQUIRED)
     find_package(HDF5 REQUIRED)
 
-    target_link_libraries(post_process PRIVATE SILO::SILO HDF5::HDF5 FFTW::FFTW)
+    target_link_libraries(post_process PRIVATE SILO::SILO HDF5::HDF5)
 
     if (MFC_MPI)
         find_package(MPI COMPONENTS Fortran REQUIRED)

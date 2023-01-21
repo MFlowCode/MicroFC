@@ -84,8 +84,7 @@ for f_id in range(1,10+1):
 
 POST_PROCESS = COMMON + [
     't_step_start', 't_step_stop', 't_step_save', 
-    'format', 'fourier_modes%beg', 'fourier_modes%end', 
-    'cons_vars_wrt', 'prim_vars_wrt', 'omega_wrt',
+    'format', 'cons_vars_wrt', 'prim_vars_wrt', 'omega_wrt',
     'schlieren_wrt', 'schlieren_alpha', 'fd_order'
 ]
 

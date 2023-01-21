@@ -205,8 +205,6 @@ contains
         integer :: i, j, k !< Generic loop iterators
 
         integer :: Nfq
-        real(kind(0d0)) :: fltr_dtheta   !<
-            !! Modified dtheta accounting for Fourier filtering in azimuthal direction.
 
         ! Computing Stability Criteria at Current Time-step ================
 !$acc parallel loop collapse(3) gang vector default(present) private(alpha_rho, vel, alpha, Re)

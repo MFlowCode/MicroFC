@@ -27,12 +27,11 @@ class MFCTarget:
 
 
 TARGETS: typing.List[MFCTarget] = [
-    MFCTarget('fftw',          ['-DMFC_FFTW=ON'],          True,  False, MFCTarget.Dependencies([], [], [])),
     MFCTarget('hdf5',          ['-DMFC_HDF5=ON'],          True,  False, MFCTarget.Dependencies([], [], [])),
     MFCTarget('silo',          ['-DMFC_SILO=ON'],          True,  False, MFCTarget.Dependencies(["hdf5"], [], [])),
     MFCTarget('pre_process',   ['-DMFC_PRE_PROCESS=ON'],   False, True,  MFCTarget.Dependencies([], [], [])),
-    MFCTarget('simulation',    ['-DMFC_SIMULATION=ON'],    False, True,  MFCTarget.Dependencies([], ["fftw"], [])),
-    MFCTarget('post_process',  ['-DMFC_POST_PROCESS=ON'],  False, True,  MFCTarget.Dependencies(['fftw', 'silo'], [], [])),
+    MFCTarget('simulation',    ['-DMFC_SIMULATION=ON'],    False, True,  MFCTarget.Dependencies([], [], [])),
+    MFCTarget('post_process',  ['-DMFC_POST_PROCESS=ON'],  False, True,  MFCTarget.Dependencies(['silo'], [], [])),
     MFCTarget('documentation', ['-DMFC_DOCUMENTATION=ON'], False, False, MFCTarget.Dependencies([], [], []))
 ]
 

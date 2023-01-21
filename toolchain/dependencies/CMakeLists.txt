@@ -15,26 +15,8 @@ include(ExternalProject)
 
 
 # Options
-option(MFC_FFTW "Build the FFTW3 dependency" OFF)
 option(MFC_HDF5 "Build the HDF5  dependency" OFF)
 option(MFC_SILO "Build the SILO  dependency" OFF)
-
-
-# FFTW3
-if (MFC_FFTW)
-    if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
-        ExternalProject_Add(fftw
-            URL        "http://www.fftw.org/fftw-3.3.10.tar.gz"
-            CMAKE_ARGS -DBUILD_TESTS=OFF
-                       -DBUILD_SHARED_LIBS=OFF
-                       "-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}"
-        )
-    else()
-        message(WARNING "The Fortran compiler vendor is Cray so FFTW3 will not be built. We will use cray-fftw instead.")
-        add_custom_target(fftw)
-    endif()
-endif()
-
 
 # HDF5
 if (MFC_HDF5)

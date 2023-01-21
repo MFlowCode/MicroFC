@@ -38,11 +38,10 @@ print(json.dumps({
             'y_domain%end'                 :  0.037,          
             'm'                            : int(Nx),                      \
             'n'                            : int(Ny),                        \
-            'p'                            : 0,                        \
             'dt'                           : dt,                   \
             't_step_start'                 : 0,                        \
-            't_step_stop'                  : 50000,                     \
-            't_step_save'                  : 1000,#(Nt/1000),                     \
+            't_step_stop'                  : 10,                     \
+            't_step_save'                  : 1,#(Nt/1000),                     \
             # ==========================================================
                                                                        \
             # Simulation Algorithm Parameters ==========================

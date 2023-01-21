@@ -145,7 +145,7 @@ if [ "$1" == "load" ]; then
             MODULES=("rocm/5.1.0" "craype-accel-amd-gfx90a")
         fi
 
-        MODULES=("${MODULES[@]}" "cmake/3.23.2" "cray-fftw/3.3.10.2" "hdf5/1.12.1" "cray-python/3.9.13.1" "ninja/1.10.2" "cray-mpich/8.1.23")
+        MODULES=("${MODULES[@]}" "cmake/3.23.2" "hdf5/1.12.1" "cray-python/3.9.13.1" "ninja/1.10.2" "cray-mpich/8.1.23")
     else
         echo -e $RED"Error: Requested system $u_computer is not supported (yet!)"$COLOR_RESET
 
