@@ -16,7 +16,6 @@ module m_viscous
     ! ==========================================================================
 
     private; public  s_get_viscous, &
-    s_compute_viscous_stress_tensor, &
     s_initialize_viscous_module, &
     s_reconstruct_cell_boundary_values_visc_deriv, &
     s_finalize_viscous_module
@@ -41,181 +40,17 @@ module m_viscous
                 Res(i, j) = fluid_pp(Re_idx(i, j))%Re(i)
             end do
         end do
-!$acc update device(Res, Re_idx, Re_size)
-
+        !$acc update device(Res, Re_idx, Re_size)
 
     end subroutine s_initialize_viscous_module
 
-    !> The purpose of this subroutine is to compute the viscous
-    !      stress tensor for the cells directly next to the axis in
-    !      cylindrical coordinates. This is necessary to avoid the
-    !      1/r singularity that arises at the cell boundary coinciding
-    !      with the axis, i.e., y_cb(-1) = 0.
-    !  @param q_prim_vf Cell-average primitive variables
-    !  @param grad_x_vf Cell-average primitive variable derivatives, x-dir
-    !  @param grad_y_vf Cell-average primitive variable derivatives, y-dir
-    subroutine s_compute_viscous_stress_tensor(q_prim_vf, grad_x_vf, grad_y_vf, &
-                                               tau_Re_vf, &
-                                               ix, iy) ! ---
-
-        type(scalar_field), dimension(sys_size), intent(IN) :: q_prim_vf
-        type(scalar_field), dimension(num_dims), intent(IN) :: grad_x_vf, grad_y_vf
-
-        type(scalar_field), dimension(1:sys_size) :: tau_Re_vf
-
-        real(kind(0d0)) :: rho_visc, gamma_visc, pi_inf_visc, alpha_visc_sum  !< Mixture variables
-        real(kind(0d0)), dimension(2) :: Re_visc
-        real(kind(0d0)), dimension(num_fluids) :: alpha_visc, alpha_rho_visc
-
-        real(kind(0d0)), dimension(num_dims, num_dims) :: tau_Re
-
-        integer :: i, j, k, q !< Generic loop iterator
-
-        type(int_bounds_info) :: ix, iy
-
-    !$acc update device(ix, iy)
-
-    !$acc parallel loop collapse(3) gang vector default(present)
-            do k = iy%beg, iy%end
-                do j = ix%beg, ix%end
-    !$acc loop seq
-                    do i = momxb, E_idx
-                        tau_Re_vf(i)%sf(j, k) = 0d0
-                    end do
-                end do
-            end do
-        if (Re_size(1) > 0) then    ! Shear stresses
-    !$acc parallel loop collapse(2) gang vector default(present) private(alpha_visc, alpha_rho_visc, Re_visc, tau_Re )
-                do k = -1, 1
-                    do j = ix%beg, ix%end
-
-    !$acc loop seq
-                        do i = 1, num_fluids
-                            alpha_rho_visc(i) = q_prim_vf(i)%sf(j, k)
-                            alpha_visc(i) = q_prim_vf(E_idx + i)%sf(j, k)
-                        end do
-
-                        rho_visc = 0d0
-                        gamma_visc = 0d0
-                        pi_inf_visc = 0d0
-
-                        alpha_visc_sum = 0d0
-
-
-!$acc loop seq
-                        do i = 1, num_fluids
-                            rho_visc = rho_visc + alpha_rho_visc(i)
-                            gamma_visc = gamma_visc + alpha_visc(i)*gammas(i)
-                            pi_inf_visc = pi_inf_visc + alpha_visc(i)*pi_infs(i)
-                        end do
-
-                        if (any(Re_size > 0)) then
-!$acc loop seq
-                            do i = 1, 2
-                                Re_visc(i) = dflt_real
-
-                                if (Re_size(i) > 0) Re_visc(i) = 0d0
-!$acc loop seq
-                                do q = 1, Re_size(i)
-                                    Re_visc(i) = alpha_visc(Re_idx(i, q))/Res(i, q) &
-                                                + Re_visc(i)
-                                end do
-
-                                Re_visc(i) = 1d0/max(Re_visc(i), sgm_eps)
-
-                            end do
-                        end if
-
-                        tau_Re(2, 1) = (grad_y_vf(1)%sf(j, k) + &
-                                        grad_x_vf(2)%sf(j, k))/ &
-                                    Re_visc(1)
-                        
-                        tau_Re(2, 2) = (4d0*grad_y_vf(2)%sf(j, k) &
-                                        - 2d0*grad_x_vf(1)%sf(j, k) &
-                                        - 2d0*q_prim_vf(momxb + 1)%sf(j, k)/y_cc(k))/ &
-                                    (3d0*Re_visc(1))      
-    !$acc loop seq
-                        do i = 1, 2
-                            tau_Re_vf(contxe + i)%sf(j, k) = &
-                                tau_Re_vf(contxe + i)%sf(j, k) - &
-                                tau_Re(2, i)
-                            
-                            tau_Re_vf(E_idx)%sf(j, k) = &
-                                tau_Re_vf(E_idx)%sf(j, k) - &
-                                q_prim_vf(contxe + i)%sf(j, k)*tau_Re(2, i)
-                        end do
-                    end do
-                end do
-        end if
-
-        if (Re_size(2) > 0) then    ! Bulk stresses
-    !$acc parallel loop collapse(2) gang vector default(present) private(alpha_visc, alpha_rho_visc, Re_visc, tau_Re )
-                do k = -1, 1
-                    do j = ix%beg, ix%end
-
-    !$acc loop seq
-                        do i = 1, num_fluids
-                            alpha_rho_visc(i) = q_prim_vf(i)%sf(j, k)
-                            alpha_visc(i) = q_prim_vf(E_idx + i)%sf(j, k)
-                        end do
-
-                        rho_visc = 0d0
-                        gamma_visc = 0d0
-                        pi_inf_visc = 0d0
-
-                        alpha_visc_sum = 0d0
-
-
-!$acc loop seq
-                        do i = 1, num_fluids
-                            rho_visc = rho_visc + alpha_rho_visc(i)
-                            gamma_visc = gamma_visc + alpha_visc(i)*gammas(i)
-                            pi_inf_visc = pi_inf_visc + alpha_visc(i)*pi_infs(i)
-                        end do
-
-                        if (any(Re_size > 0)) then
-!$acc loop seq
-                            do i = 1, 2
-                                Re_visc(i) = dflt_real
-
-                                if (Re_size(i) > 0) Re_visc(i) = 0d0
-!$acc loop seq
-                                do q = 1, Re_size(i)
-                                    Re_visc(i) = alpha_visc(Re_idx(i, q))/Res(i, q) &
-                                                + Re_visc(i)
-                                end do
-
-                                Re_visc(i) = 1d0/max(Re_visc(i), sgm_eps)
-
-                            end do
-                        end if
-
-                        tau_Re(2, 2) = (grad_x_vf(1)%sf(j, k) + &
-                                        grad_y_vf(2)%sf(j, k) + &
-                                        q_prim_vf(momxb + 1)%sf(j, k)/y_cc(k))/ &
-                                    Re_visc(2)
-
-                        tau_Re_vf(momxb + 1)%sf(j, k) = &
-                            tau_Re_vf(momxb + 1)%sf(j, k) - &
-                            tau_Re(2, 2)
-
-                        tau_Re_vf(E_idx)%sf(j, k) = &
-                            tau_Re_vf(E_idx)%sf(j, k) - &
-                            q_prim_vf(momxb + 1)%sf(j, k)*tau_Re(2, 2)
-
-                    end do
-                end do
-        end if
-
-    end subroutine s_compute_viscous_stress_tensor ! ----------------------------------------
 
     !>  Computes the scalar gradient fields via finite differences
         !!  @param var Variable to compute derivative of
         !!  @param grad_x First coordinate direction component of the derivative
         !!  @param grad_y Second coordinate direction component of the derivative
         !!  @param norm Norm of the gradient vector
-    subroutine s_compute_fd_gradient(var, grad_x, grad_y, norm, &
-                                     ix, iy)
+    subroutine s_compute_fd_gradient(var, grad_x, grad_y, norm, ix, iy)
 
         type(scalar_field), intent(IN) :: var
         type(scalar_field), intent(INOUT) :: grad_x

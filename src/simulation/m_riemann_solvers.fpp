@@ -602,8 +602,6 @@ contains
         ! the Riemann problem solution
         integer :: i, j
 
-
-
         if (any(Re_size > 0)) then
             allocate (Res(1:2, 1:maxval(Re_size)))
         end if
@@ -617,12 +615,9 @@ contains
 !$acc update device(Res, Re_idx, Re_size)
         end if
 
-
-
         ! Associating procedural pointer to the subroutine that will be
         ! utilized to calculate the solution of a given Riemann problem
         s_riemann_solver => s_hllc_riemann_solver
-
 
         ! Associating the procedural pointers to the procedures that will be
         ! utilized to compute the average state and estimate the wave speeds
@@ -633,9 +628,7 @@ contains
 
         ! Associating the procedural pointer to the appropriate subroutine
         ! that will be utilized in the conversion to the mixture variables
-
-        s_convert_to_mixture_variables => &
-            s_convert_species_to_mixture_variables
+        s_convert_to_mixture_variables => s_convert_species_to_mixture_variables
 
         is1%beg = -1; is2%beg = 0
         is1%end = m; is2%end = n
@@ -738,13 +731,13 @@ contains
 
         isx = ix; isy = iy
 
-!$acc update device(is1, is2, dir_idx, dir_flg, isx, isy)
+        !$acc update device(is1, is2, dir_idx, dir_flg, isx, isy)
 
         ! Population of Buffers in x-direction =============================
         if (norm_dir == 1) then
 
             if (bc_x%beg == -4) then    ! Riemann state extrap. BC at beginning
-!$acc parallel loop collapse(2) gang vector default(present)
+                !$acc parallel loop collapse(2) gang vector default(present)
                 do i = 1, sys_size
                         do k = is2%beg, is2%end
                             qL_prim_rsx_vf(-1, k,i) = &
@@ -753,7 +746,7 @@ contains
                 end do
 
                 if (any(Re_size > 0)) then
-!$acc parallel loop collapse(2) gang vector default(present)
+                    !$acc parallel loop collapse(2) gang vector default(present)
                     do i = momxb, momxe
                             do k = isy%beg, isy%end
 
@@ -763,7 +756,7 @@ contains
                     end do
 
                     if (n > 0) then
-!$acc parallel loop collapse(2) gang vector default(present)
+                        !$acc parallel loop collapse(2) gang vector default(present)
                         do i = momxb, momxe
                                 do k = isy%beg, isy%end
 
@@ -780,7 +773,7 @@ contains
 
             if (bc_x%end == -4) then    ! Riemann state extrap. BC at end
 
-!$acc parallel loop collapse(2) gang vector default(present)
+                !$acc parallel loop collapse(2) gang vector default(present)
                 do i = 1, sys_size
                         do k = is2%beg, is2%end
                             qR_prim_rsx_vf(m + 1, k,i) = &
@@ -790,7 +783,7 @@ contains
 
                 if (any(Re_size > 0)) then
 
-!$acc parallel loop collapse(2) gang vector default(present)
+                    !$acc parallel loop collapse(2) gang vector default(present)
                     do i = momxb, momxe
                             do k = isy%beg, isy%end
 
@@ -800,7 +793,7 @@ contains
                     end do
 
                     if (n > 0) then
-!$acc parallel loop collapse(2) gang vector default(present)
+                        !$acc parallel loop collapse(2) gang vector default(present)
                         do i = momxb, momxe
                                 do k = isy%beg, isy%end
 
@@ -820,7 +813,7 @@ contains
         elseif (norm_dir == 2) then
 
             if (bc_y%beg == -4) then    ! Riemann state extrap. BC at beginning
-!$acc parallel loop collapse(2) gang vector default(present)
+                !$acc parallel loop collapse(2) gang vector default(present)
                 do i = 1, sys_size
                         do k = is2%beg, is2%end
                             qL_prim_rsy_vf(-1, k,i) = &
@@ -830,7 +823,7 @@ contains
 
                 if (any(Re_size > 0)) then
 
-!$acc parallel loop collapse(2) gang vector default(present)
+                    !$acc parallel loop collapse(2) gang vector default(present)
                     do i = momxb, momxe
                             do j = isx%beg, isx%end
                                 dqL_prim_dx_vf(i)%sf(j, -1) = &
@@ -838,7 +831,7 @@ contains
                             end do
                     end do
 
-!$acc parallel loop collapse(2) gang vector default(present)
+                    !$acc parallel loop collapse(2) gang vector default(present)
                     do i = momxb, momxe
                             do j = isx%beg, isx%end
                                 dqL_prim_dy_vf(i)%sf(j, -1) = &
@@ -853,7 +846,7 @@ contains
 
             if (bc_y%end == -4) then    ! Riemann state extrap. BC at end
 
-!$acc parallel loop collapse(2) gang vector default(present)
+                !$acc parallel loop collapse(2) gang vector default(present)
                 do i = 1, sys_size
                         do k = is2%beg, is2%end
                             qR_prim_rsy_vf(n + 1, k,i) = &
@@ -862,8 +855,7 @@ contains
                 end do
 
                 if (any(Re_size > 0)) then
-
-!$acc parallel loop collapse(2) gang vector default(present)
+                    !$acc parallel loop collapse(2) gang vector default(present)
                     do i = momxb, momxe
                             do j = isx%beg, isx%end
                                 dqR_prim_dx_vf(i)%sf(j, n + 1) = &
@@ -871,17 +863,14 @@ contains
                             end do
                     end do
 
-!$acc parallel loop collapse(2) gang vector default(present)
+                    !$acc parallel loop collapse(2) gang vector default(present)
                     do i = momxb, momxe
                             do j = isx%beg, isx%end
                                 dqR_prim_dy_vf(i)%sf(j, n + 1) = &
                                     dqL_prim_dy_vf(i)%sf(j, n)
                             end do
                     end do
-
-
                 end if
-
             end if
             ! END: Population of Buffers in y-direction ========================
         end if
@@ -947,10 +936,7 @@ contains
                         end do
                 end do
             end if
-
         end if
-
-        ! ==================================================================
 
     end subroutine s_initialize_riemann_solver ! ---------------------------
 
