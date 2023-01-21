@@ -452,14 +452,9 @@ contains
         end if
 
 
-        ! Associating procedural pointer to the subroutine that will be
-        ! utilized to calculate the solution of a given Riemann problem
-        s_riemann_solver => s_hllc_riemann_solver
-
         ! Associating the procedural pointer to the appropriate subroutine
         ! that will be utilized in the conversion to the mixture variables
-        s_convert_to_mixture_variables => &
-            s_convert_species_to_mixture_variables
+        s_convert_to_mixture_variables => s_convert_species_to_mixture_variables
 
     end subroutine s_initialize_rhs_module ! -------------------------------
 
@@ -609,7 +604,7 @@ contains
 
             ! Computing Riemann Solver Flux and Source Flux =================
 
-            call s_riemann_solver(qR_rsx_vf, qR_rsy_vf, &
+            call s_hllc_riemann_solver(qR_rsx_vf, qR_rsy_vf, &
                                   dqR_prim_dx_n(id)%vf, &
                                   dqR_prim_dy_n(id)%vf, &
                                   qR_prim(id)%vf, &
@@ -1140,7 +1135,6 @@ contains
 
         @:DEALLOCATE(flux_n, flux_src_n)
 
-        s_riemann_solver => null()
         s_convert_to_mixture_variables => null()
 
     end subroutine s_finalize_rhs_module ! ---------------------------------

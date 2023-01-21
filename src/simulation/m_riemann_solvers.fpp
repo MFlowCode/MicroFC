@@ -18,106 +18,8 @@ module m_riemann_solvers
     implicit none
 
     private; public :: s_initialize_riemann_solvers_module, &
-                        s_riemann_solver, &
                         s_hllc_riemann_solver, &
                         s_finalize_riemann_solvers_module
-
-    abstract interface ! =======================================================
-
-        !> Abstract interface to the subroutines that are utilized to compute the
-        !! Riemann problem solution. For additional information please reference:
-        !!                        1) s_hll_riemann_solver
-        !!                        2) s_hllc_riemann_solver
-        !!                        3) s_exact_riemann_solver
-        !!  @param qL_prim_vf The  left WENO-reconstructed cell-boundary values of the
-        !!      cell-average primitive variables
-        !!  @param qR_prim_vf The right WENO-reconstructed cell-boundary values of the
-        !!      cell-average primitive variables
-        !!  @param dqL_prim_dx_vf The  left WENO-reconstructed cell-boundary values of the
-        !!      first-order x-dir spatial derivatives
-        !!  @param dqL_prim_dy_vf The  left WENO-reconstructed cell-boundary values of the
-        !!      first-order y-dir spatial derivatives
-        !!  @param dqR_prim_dx_vf The right WENO-reconstructed cell-boundary values of the
-        !!      first-order x-dir spatial derivatives
-        !!  @param dqR_prim_dy_vf The right WENO-reconstructed cell-boundary values of the
-        !!      first-order y-dir spatial derivatives
-        !!  @param gm_alphaL_vf  Left averaged gradient magnitude
-        !!  @param gm_alphaR_vf Right averaged gradient magnitude
-        !!  @param flux_vf Intra-cell fluxes
-        !!  @param flux_src_vf Intra-cell fluxes sources
-        !!  @param norm_dir Dir. splitting direction
-        !!  @param ix Index bounds in the x-dir
-        !!  @param iy Index bounds in the y-dir
-        !!  @param q_prim_vf Cell-averaged primitive variables
-        subroutine s_abstract_riemann_solver(qL_prim_rsx_vf, qL_prim_rsy_vf, dqL_prim_dx_vf, &
-                                             dqL_prim_dy_vf, &
-                                             qL_prim_vf, &
-                                             qR_prim_rsx_vf, qR_prim_rsy_vf, dqR_prim_dx_vf, &
-                                             dqR_prim_dy_vf, &
-                                             qR_prim_vf, &
-                                             q_prim_vf, &
-                                             flux_vf, flux_src_vf, &
-                                             norm_dir, ix, iy)
-
-            import :: scalar_field, int_bounds_info, sys_size, startx, starty
-
-            real(kind(0d0)), dimension(startx:, starty:, 1:), intent(INOUT) :: qL_prim_rsx_vf, qL_prim_rsy_vf, qR_prim_rsx_vf, qR_prim_rsy_vf
-            type(scalar_field), dimension(sys_size), intent(IN) :: q_prim_vf
-
-            type(scalar_field), allocatable, dimension(:), intent(INOUT) :: qL_prim_vf, qR_prim_vf
-
-            type(scalar_field), &
-                allocatable, dimension(:), &
-                intent(INOUT) :: dqL_prim_dx_vf, dqR_prim_dx_vf, &
-                                 dqL_prim_dy_vf, dqR_prim_dy_vf
-
-            type(scalar_field), &
-                dimension(sys_size), &
-                intent(INOUT) :: flux_vf, flux_src_vf
-
-            integer, intent(IN) :: norm_dir
-
-            type(int_bounds_info), intent(IN) :: ix, iy
-
-        end subroutine s_abstract_riemann_solver
-
-
-        !> The abstract interface to the subroutines that are utilized to compute
-        !! the viscous source fluxes for either Cartesian or cylindrical geometries.
-        !! For more information please refer to:
-        !!      1) s_compute_cartesian_viscous_source_flux
-        !!      2) s_compute_cylindrical_viscous_source_flux
-        subroutine s_compute_abstract_viscous_source_flux(velL_vf, & ! -------------
-                                                          dvelL_dx_vf, &
-                                                          dvelL_dy_vf, &
-                                                          velR_vf, &
-                                                          dvelR_dx_vf, &
-                                                          dvelR_dy_vf, &
-                                                          flux_src_vf, &
-                                                          norm_dir, &
-                                                          ix, iy)
-
-            import :: scalar_field, int_bounds_info, num_dims, sys_size
-
-            type(scalar_field), &
-                dimension(num_dims), &
-                intent(IN) :: velL_vf, velR_vf, &
-                              dvelL_dx_vf, dvelR_dx_vf, &
-                              dvelL_dy_vf, dvelR_dy_vf
-
-            type(scalar_field), &
-                dimension(sys_size), &
-                intent(INOUT) :: flux_src_vf
-
-            integer, intent(IN) :: norm_dir
-
-            type(int_bounds_info), intent(IN) :: ix, iy
-
-        end subroutine s_compute_abstract_viscous_source_flux
-
-    end interface ! ============================================================
-
-
 
     !> The cell-boundary values of the fluxes (src - source) that are computed
     !! through the chosen Riemann problem solver, and the direct evaluation of
@@ -201,17 +103,6 @@ module m_riemann_solvers
     real(kind(0d0)) :: xi_L, xi_R
 
 !$acc declare create(s_L, s_R, s_S, s_M, s_P, xi_M, xi_P, xi_L, xi_R)
-
-    procedure(s_abstract_riemann_solver), &
-        pointer :: s_riemann_solver => null() !<
-    !! Pointer to the procedure that is utilized to calculate either the HLL,
-    !! HLLC or exact intercell fluxes, based on the choice of Riemann solver
-
-
-    procedure(s_compute_abstract_viscous_source_flux), &
-        pointer :: s_compute_viscous_source_flux => null() !<
-    !! Pointer to the subroutine that is utilized to compute the viscous source
-    !! flux for either Cartesian or cylindrical geometries.
 
     !> @name Indical bounds in the s1-, s2- and s3-directions
     !> @{
@@ -563,17 +454,6 @@ contains
 !$acc update device(Res, Re_idx, Re_size)
         end if
 
-        ! Associating procedural pointer to the subroutine that will be
-        ! utilized to calculate the solution of a given Riemann problem
-        s_riemann_solver => s_hllc_riemann_solver
-
-        ! Associating the procedural pointers to the procedures that will be
-        ! utilized to compute the average state and estimate the wave speeds
-
-        ! Associating procedural pointer to the subroutine that will be
-        ! utilized to compute the viscous source flux
-        s_compute_viscous_source_flux => s_compute_cartesian_viscous_source_flux
-
         ! Associating the procedural pointer to the appropriate subroutine
         ! that will be utilized in the conversion to the mixture variables
         s_convert_to_mixture_variables => s_convert_species_to_mixture_variables
@@ -901,7 +781,7 @@ contains
         !!  @param norm_dir Dimensional splitting coordinate direction
         !!  @param ix Index bounds in  first coordinate direction
         !!  @param iy Index bounds in second coordinate direction
-    subroutine s_compute_cartesian_viscous_source_flux(velL_vf, & ! -------------
+    subroutine s_compute_viscous_source_flux(velL_vf, & ! -------------
                                                        dvelL_dx_vf, &
                                                        dvelL_dy_vf, &
                                                        velR_vf, &
@@ -1126,7 +1006,7 @@ contains
             end if
         end if
 
-    end subroutine s_compute_cartesian_viscous_source_flux ! -------------------------
+    end subroutine s_compute_viscous_source_flux ! -------------------------
 
     !>  Deallocation and/or disassociation procedures that are
         !!      needed to finalize the selected Riemann problem solver
@@ -1201,15 +1081,6 @@ contains
         ! the Riemann problem solution
 
         integer :: i
-
-
-        ! Disassociating procedural pointer to the subroutine which was
-        ! utilized to calculate the solution of a given Riemann problem
-        s_riemann_solver => null()
-
-        ! Disassociating procedural pointer to the subroutine which was
-        ! utilized to calculate the viscous source flux
-        s_compute_viscous_source_flux => null()
 
         ! Disassociating the pointer to the procedure that was utilized to
         ! to convert mixture or species variables to the mixture variables
