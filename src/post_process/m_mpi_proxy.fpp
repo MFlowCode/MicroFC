@@ -1072,7 +1072,7 @@ contains
         !!  to each processor's rank.
     subroutine s_mpi_gather_data_extents(q_sf, data_extents) ! -------------
 
-        real(kind(0d0)), dimension(:, :, :), intent(IN) :: q_sf
+        real(kind(0d0)), dimension(:, :), intent(IN) :: q_sf
 
         real(kind(0d0)), &
             dimension(1:2, 0:num_procs - 1), &
