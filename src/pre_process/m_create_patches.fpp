@@ -81,7 +81,7 @@ contains
                 x_boundary%end >= x_cc(i) .and. &
                 patch_icpp(patch_id)%alter_patch(patch_id_fp(i, 0))) then
 
-                call s_assign_patch_primitive_variables(patch_id, i, 0)
+                call s_assign_patch_species_primitive_variables(patch_id, i, 0)
 
             end if
         end do
@@ -137,7 +137,7 @@ contains
                     patch_id_fp(i, j) == smooth_patch_id) &
                     then
 
-                    call s_assign_patch_primitive_variables(patch_id, i, j)
+                    call s_assign_patch_species_primitive_variables(patch_id, i, j)
 
                 end if
 
@@ -186,7 +186,7 @@ contains
                     myr >= radius - thickness/2.d0 .and. &
                     patch_icpp(patch_id)%alter_patch(patch_id_fp(i, j))) then
 
-                    call s_assign_patch_primitive_variables(patch_id, i, j)
+                    call s_assign_patch_species_primitive_variables(patch_id, i, j)
                 end if
 
             end do
@@ -243,7 +243,7 @@ contains
                     patch_id_fp(i, j) == smooth_patch_id) &
                     then
 
-                    call s_assign_patch_primitive_variables(patch_id, i, j)
+                    call s_assign_patch_species_primitive_variables(patch_id, i, j)
                 end if
             end do
         end do
@@ -305,7 +305,7 @@ contains
                     patch_icpp(patch_id)%alter_patch(patch_id_fp(i, j))) &
                     then
 
-                    call s_assign_patch_primitive_variables(patch_id, i, j)
+                    call s_assign_patch_species_primitive_variables(patch_id, i, j)
 
                 end if
             end do
@@ -362,7 +362,7 @@ contains
                     .or. &
                     patch_id_fp(i, j) == smooth_patch_id) &
                     then
-                    call s_assign_patch_primitive_variables(patch_id, i, j)
+                    call s_assign_patch_species_primitive_variables(patch_id, i, j)
 
                 end if
 
@@ -409,7 +409,7 @@ contains
                     patch_icpp(patch_id)%alter_patch(patch_id_fp(i, j))) &
                     then
 
-                    call s_assign_patch_primitive_variables(patch_id, &
+                    call s_assign_patch_species_primitive_variables(patch_id, &
                                                             i, j)
 
                 end if
@@ -461,7 +461,7 @@ contains
                 x_boundary%end >= x_cc(i) .and. &
                 patch_icpp(patch_id)%alter_patch(patch_id_fp(i, 0))) then
 
-                call s_assign_patch_primitive_variables(patch_id, i, 0)
+                call s_assign_patch_species_primitive_variables(patch_id, i, 0)
 
                 !what variables to alter
                 !bump in pressure
@@ -522,7 +522,7 @@ contains
                     y_boundary%end >= y_cc(j) .and. &
                     patch_icpp(patch_id)%alter_patch(patch_id_fp(i, j))) then
 
-                    call s_assign_patch_primitive_variables(patch_id, i, j)
+                    call s_assign_patch_species_primitive_variables(patch_id, i, j)
 
                     !what variables to alter
                     !x-y bump in pressure

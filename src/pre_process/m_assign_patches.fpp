@@ -12,26 +12,6 @@ module m_assign_patches
 
     implicit none
 
-    !> Abstract interface to the two subroutines that assign the patch primitive
-    !! variables, either mixture or species, depending on the subroutine, to a
-    !! particular cell in the computational domain
-    abstract interface
-
-        !> Skeleton of s_assign_patch_mixture_primitive_variables
-        !!      and s_assign_patch_species_primitive_variables
-        !! @param patch_id is the patch identifier
-        !! @param j (x) cell index in which the mixture or species primitive variables from the indicated patch areassigned
-        !! @param k (y,th) cell index in which the mixture or species primitive variables from the indicated patch areassigned
-        !! @param l (z) cell index in which the mixture or species primitive variables from the indicated patch areassigned
-        subroutine s_assign_patch_xxxxx_primitive_variables(patch_id, j, k)
-
-            integer, intent(IN) :: patch_id
-            integer, intent(IN) :: j, k
-
-        end subroutine s_assign_patch_xxxxx_primitive_variables
-
-    end interface
-
     ! NOTE: The abstract interface allows for the declaration of a pointer to
     ! a procedure such that the choice of the model equations does not have to
     ! be queried every time the patch primitive variables are to be assigned in
@@ -55,9 +35,6 @@ module m_assign_patches
     !! with each of the cells in the computational domain. Note that only one
     !! patch identity may be associated with any one cell.
 
-    procedure(s_assign_patch_xxxxx_primitive_variables), &
-        pointer :: s_assign_patch_primitive_variables => null() !<
-    
 contains
 
     !>      This subroutine assigns the species primitive variables
@@ -222,14 +199,6 @@ contains
         ! when it is being applied in the domain.
         patch_id_fp = 0
 
-        ! Depending on multicomponent flow model, the appropriate procedure
-        ! for assignment of the patch mixture or species primitive variables
-        ! to a cell in the domain is targeted by the procedure pointer
-
-        s_assign_patch_primitive_variables => &
-            s_assign_patch_species_primitive_variables
-
-
     end subroutine s_initialize_assign_patches_module ! -----------------
 
 
@@ -249,11 +218,6 @@ contains
 
         ! Deallocating the patch identities bookkeeping variable
         deallocate (patch_id_fp)
-
-        ! Nullifying procedure pointer to the subroutine assigning either
-        ! the patch mixture or species primitive variables to a cell in the
-        ! computational domain
-        s_assign_patch_primitive_variables => null()
 
     end subroutine s_finalize_assign_patches_module ! -------------------
 
