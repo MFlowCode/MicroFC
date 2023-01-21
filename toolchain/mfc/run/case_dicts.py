@@ -61,7 +61,7 @@ SIMULATION = COMMON + [
     'run_time_info', 't_step_old', 't_tol', 'dt', 't_step_start',
     't_step_stop', 't_step_save', 'time_stepper', 'weno_vars', 'weno_eps',
     'weno_avg', 'weno_Re_flux', 'wave_speeds', 'avg_state', 'commute_err', 'split_err',
-    'reg_eps', 'null_weights', 'mixture_err', 'tvd_riemann_flux', 'tvd_rhs_flux', 
+    'reg_eps', 'null_weights', 'tvd_riemann_flux', 'tvd_rhs_flux', 
     'tvd_wave_speeds', 'fd_order', 'num_probes', 'probe_wrt', 'cu_mpi'
 ]
 
@@ -85,8 +85,8 @@ for f_id in range(1,10+1):
         SIMULATION.append(f"fluid_pp({f_id})%Re({re_id})")
 
 POST_PROCESS = COMMON + [
-    't_step_start', 't_step_stop', 't_step_save', 'alt_soundspeed',
-    'mixture_err', 'format', 'coarsen_silo', 'fourier_decomp',
+    't_step_start', 't_step_stop', 't_step_save', 
+    'format', 'coarsen_silo', 'fourier_decomp',
     'fourier_modes%beg', 'fourier_modes%end', 'alpha_rho_wrt', 'rho_wrt',
     'mom_wrt', 'vel_wrt', 'flux_lim', 'flux_wrt', 'E_wrt', 'pres_wrt',
     'alpha_wrt', 'kappa_wrt', 'gamma_wrt', 'heat_ratio_wrt', 'pi_inf_wrt',
@@ -107,11 +107,11 @@ for fl_id in range(1,10+1):
     for append in ["schlieren_alpha", "alpha_rho_wrt", "alpha_wrt", "kappa_wrt"]:
         POST_PROCESS.append(f'{append}({fl_id})')
 
-    for attribute in ["gamma", "pi_inf", "ss", "pv", "gamma_v", "M_v", "mu_v", "k_v", "G", "mul0"]:
+    for attribute in ["gamma", "pi_inf"]:
         POST_PROCESS.append(f"fluid_pp({fl_id})%{attribute}")
 
 
-CASE_OPTIMIZATION = [ "nb", "weno_order" ]
+CASE_OPTIMIZATION = [ "weno_order" ]
 
 
 def get_input_dict_keys(target_name: str) -> list:
