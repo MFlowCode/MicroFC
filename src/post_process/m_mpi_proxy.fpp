@@ -109,16 +109,13 @@ contains
         integer :: i !< Generic loop iterator
 
         do i = 1, sys_size
-            MPI_IO_DATA%var(i)%sf => q_cons_vf(i)%sf(0:m, 0:n, 0:p)
+            MPI_IO_DATA%var(i)%sf => q_cons_vf(i)%sf(0:m, 0:n)
         end do
 
         ! Define global(g) and local(l) sizes for flow variables
         sizes_glb(1) = m_glb + 1; sizes_loc(1) = m + 1
         if (n > 0) then
             sizes_glb(2) = n_glb + 1; sizes_loc(2) = n + 1
-            if (p > 0) then
-                sizes_glb(3) = p_glb + 1; sizes_loc(3) = p + 1
-            end if
         end if
 
         ! Define the view for each variable
@@ -160,37 +157,15 @@ contains
             ! Simulation is at least 2D
             if (n > 0) then
 
-                ! Simulation is 3D
-                if (p > 0) then
+                allocate (q_cons_buffer_in(0:buff_size* &
+                                           sys_size* &
+                                           (max(m, n) &
+                                            + 2*buff_size + 1) - 1))
+                allocate (q_cons_buffer_out(0:buff_size* &
+                                            sys_size* &
+                                            (max(m, n) &
+                                             + 2*buff_size + 1) - 1))
 
-                    allocate (q_cons_buffer_in(0:buff_size* &
-                                               sys_size* &
-                                               (m + 2*buff_size + 1)* &
-                                               (n + 2*buff_size + 1)* &
-                                               (p + 2*buff_size + 1)/ &
-                                               (min(m, n, p) &
-                                                + 2*buff_size + 1) - 1))
-                    allocate (q_cons_buffer_out(0:buff_size* &
-                                                sys_size* &
-                                                (m + 2*buff_size + 1)* &
-                                                (n + 2*buff_size + 1)* &
-                                                (p + 2*buff_size + 1)/ &
-                                                (min(m, n, p) &
-                                                 + 2*buff_size + 1) - 1))
-
-                    ! Simulation is 2D
-                else
-
-                    allocate (q_cons_buffer_in(0:buff_size* &
-                                               sys_size* &
-                                               (max(m, n) &
-                                                + 2*buff_size + 1) - 1))
-                    allocate (q_cons_buffer_out(0:buff_size* &
-                                                sys_size* &
-                                                (max(m, n) &
-                                                 + 2*buff_size + 1) - 1))
-
-                end if
 
                 ! Simulation is 1D
             else
@@ -250,40 +225,33 @@ contains
         ! Logistics
         call MPI_BCAST(case_dir, len(case_dir), MPI_CHARACTER, 0, MPI_COMM_WORLD, ierr)
 
-        #:for VAR in [ 'm', 'n', 'p', 'm_glb', 'n_glb', 'p_glb',               &
+        #:for VAR in [ 'm', 'n', 'm_glb', 'n_glb',               &
             & 't_step_start', 't_step_stop', 't_step_save', 'weno_order',      &
-            & 'model_eqns', 'num_fluids', 'bc_x%beg', 'bc_x%end', 'bc_y%beg',  &
-            & 'bc_y%end', 'bc_z%beg', 'bc_z%end', 'flux_lim', 'format',        &
-            & 'precision', 'fd_order', 'thermal', 'nb' ]
+            & 'num_fluids', 'bc_x%beg', 'bc_x%end', 'bc_y%beg',  &
+            & 'bc_y%end', 'format',        &
+            & 'precision', 'fd_order' ]
             call MPI_BCAST(${VAR}$, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 
-        #:for VAR in [ 'cyl_coord', 'adv_alphan', 'mpp_lim', 'mixture_err',    &
-            & 'alt_soundspeed', 'hypoelasticity', 'parallel_io', 'rho_wrt',    &
+        #:for VAR in [ 'parallel_io', 'rho_wrt',    &
             & 'coarsen_silo', 'E_wrt', 'pres_wrt', 'gamma_wrt',                & 
             & 'heat_ratio_wrt', 'pi_inf_wrt', 'pres_inf_wrt', 'cons_vars_wrt', & 
-            & 'prim_vars_wrt', 'c_wrt', 'schlieren_wrt', 'bubbles',            &
-            & 'polytropic', 'fourier_decomp', 'polydisperse' ]
+            & 'prim_vars_wrt', 'c_wrt', 'schlieren_wrt', 'fourier_decomp' ]
             call MPI_BCAST(${VAR}$, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 
-        call MPI_BCAST(flux_wrt(1), 3, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-        call MPI_BCAST(omega_wrt(1), 3, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-        call MPI_BCAST(mom_wrt(1), 3, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-        call MPI_BCAST(vel_wrt(1), 3, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+        call MPI_BCAST(flux_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+        call MPI_BCAST(omega_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+        call MPI_BCAST(mom_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+        call MPI_BCAST(vel_wrt(1), 2, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
         call MPI_BCAST(alpha_rho_wrt(1), num_fluids_max, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
         call MPI_BCAST(alpha_wrt(1), num_fluids_max, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
 
         do i = 1, num_fluids_max
             call MPI_BCAST(fluid_pp(i)%gamma, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
             call MPI_BCAST(fluid_pp(i)%pi_inf, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
-            call MPI_BCAST(fluid_pp(i)%G, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
         end do
 
-        #:for VAR in [ 'pref', 'rhoref', 'R0ref', 'poly_sigma', 'Web', 'Ca', &
-            & 'Re_inv' ]
-            call MPI_BCAST(${VAR}$, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
-        #:endfor
         call MPI_BCAST(schlieren_alpha(1), num_fluids_max, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
 #endif
 
@@ -299,11 +267,11 @@ contains
 #ifdef MFC_MPI
 
         ! # of processors in the x-, y- and z-coordinate directions
-        integer :: num_procs_x, num_procs_y, num_procs_z
+        integer :: num_procs_x, num_procs_y
 
         ! Temporary # of processors in x-, y- and z-coordinate directions
         ! used during the processor factorization optimization procedure
-        real(kind(0d0)) :: tmp_num_procs_x, tmp_num_procs_y, tmp_num_procs_z
+        real(kind(0d0)) :: tmp_num_procs_x, tmp_num_procs_y
 
         ! Processor factorization (fct) minimization parameter
         real(kind(0d0)) :: fct_min
@@ -331,204 +299,7 @@ contains
         ! equivalent piece of the computational domain. Note that explicit
         ! type-casting is omitted here for code legibility purposes.
 
-        ! Generating 3D Cartesian Processor Topology =======================
-
         if (n > 0) then
-
-            if (p > 0) then
-
-                if (cyl_coord .and. p > 0) then
-                    ! Implement pencil processor blocking if using cylindrical coordinates so
-                    ! that all cells in azimuthal direction are stored on a single processor.
-                    ! This is necessary for efficient application of Fourier filter near axis.
-
-                    ! Initial values of the processor factorization optimization
-                    num_procs_x = 1
-                    num_procs_y = num_procs
-                    num_procs_z = 1
-                    ierr = -1
-
-                    ! Computing minimization variable for these initial values
-                    tmp_num_procs_x = num_procs_x
-                    tmp_num_procs_y = num_procs_y
-                    tmp_num_procs_z = num_procs_z
-                    fct_min = 10d0*abs((m + 1)/tmp_num_procs_x &
-                                       - (n + 1)/tmp_num_procs_y)
-
-                    ! Searching for optimal computational domain distribution
-                    do i = 1, num_procs
-
-                        if (mod(num_procs, i) == 0 &
-                            .and. &
-                            (m + 1)/i >= num_stcls_min*weno_order) then
-
-                            tmp_num_procs_x = i
-                            tmp_num_procs_y = num_procs/i
-
-                            if (fct_min >= abs((m + 1)/tmp_num_procs_x &
-                                               - (n + 1)/tmp_num_procs_y) &
-                                .and. &
-                                (n + 1)/tmp_num_procs_y &
-                                >= &
-                                num_stcls_min*weno_order) then
-
-                                num_procs_x = i
-                                num_procs_y = num_procs/i
-                                fct_min = abs((m + 1)/tmp_num_procs_x &
-                                              - (n + 1)/tmp_num_procs_y)
-                                ierr = 0
-
-                            end if
-
-                        end if
-
-                    end do
-
-                else
-
-                    ! Initial values of the processor factorization optimization
-                    num_procs_x = 1
-                    num_procs_y = 1
-                    num_procs_z = num_procs
-                    ierr = -1
-
-                    ! Computing minimization variable for these initial values
-                    tmp_num_procs_x = num_procs_x
-                    tmp_num_procs_y = num_procs_y
-                    tmp_num_procs_z = num_procs_z
-                    fct_min = 10d0*abs((m + 1)/tmp_num_procs_x &
-                                       - (n + 1)/tmp_num_procs_y) &
-                              + 10d0*abs((n + 1)/tmp_num_procs_y &
-                                         - (p + 1)/tmp_num_procs_z)
-
-                    ! Searching for optimal computational domain distribution
-                    do i = 1, num_procs
-
-                        if (mod(num_procs, i) == 0 &
-                            .and. &
-                            (m + 1)/i >= num_stcls_min*weno_order) then
-
-                            do j = 1, (num_procs/i)
-
-                                if (mod(num_procs/i, j) == 0 &
-                                    .and. &
-                                    (n + 1)/j >= num_stcls_min*weno_order) then
-
-                                    tmp_num_procs_x = i
-                                    tmp_num_procs_y = j
-                                    tmp_num_procs_z = num_procs/(i*j)
-
-                                    if (fct_min >= abs((m + 1)/tmp_num_procs_x &
-                                                       - (n + 1)/tmp_num_procs_y) &
-                                        + abs((n + 1)/tmp_num_procs_y &
-                                              - (p + 1)/tmp_num_procs_z) &
-                                        .and. &
-                                        (p + 1)/tmp_num_procs_z &
-                                        >= &
-                                        num_stcls_min*weno_order) &
-                                        then
-
-                                        num_procs_x = i
-                                        num_procs_y = j
-                                        num_procs_z = num_procs/(i*j)
-                                        fct_min = abs((m + 1)/tmp_num_procs_x &
-                                                      - (n + 1)/tmp_num_procs_y) &
-                                                  + abs((n + 1)/tmp_num_procs_y &
-                                                        - (p + 1)/tmp_num_procs_z)
-                                        ierr = 0
-
-                                    end if
-
-                                end if
-
-                            end do
-
-                        end if
-
-                    end do
-
-                end if
-
-                ! Checking whether the decomposition of the computational
-                ! domain was successful
-                if (proc_rank == 0 .and. ierr == -1) then
-                    print '(A)', 'Unable to decompose computational '// &
-                        'domain for selected number of '// &
-                        'processors. Exiting ...'
-                    call MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
-                end if
-
-                ! Creating a new communicator using Cartesian topology
-                call MPI_CART_CREATE(MPI_COMM_WORLD, 3, (/num_procs_x, &
-                                                          num_procs_y, num_procs_z/), &
-                                     (/.true., .true., .true./), &
-                                     .false., MPI_COMM_CART, ierr)
-
-                ! Finding corresponding Cartesian coordinates of the local
-                ! processor rank in newly declared cartesian communicator
-                call MPI_CART_COORDS(MPI_COMM_CART, proc_rank, 3, &
-                                     proc_coords, ierr)
-
-                ! END: Generating 3D Cartesian Processor Topology ==================
-
-                ! Sub-domain Global Parameters in z-direction ======================
-
-                ! Number of remaining cells after majority is distributed
-                rem_cells = mod(p + 1, num_procs_z)
-
-                ! Optimal number of cells per processor
-                p = (p + 1)/num_procs_z - 1
-
-                ! Distributing any remaining cells
-                do i = 1, rem_cells
-                    if (proc_coords(3) == i - 1) then
-                        p = p + 1
-                        exit
-                    end if
-                end do
-
-                ! Boundary condition at the beginning
-                if (proc_coords(3) > 0 .or. bc_z%beg == -1) then
-                    proc_coords(3) = proc_coords(3) - 1
-                    call MPI_CART_RANK(MPI_COMM_CART, proc_coords, &
-                                       bc_z%beg, ierr)
-                    proc_coords(3) = proc_coords(3) + 1
-                end if
-
-                ! Ghost zone at the beginning
-                if (proc_coords(3) > 0 .and. format == 1) then
-                    offset_z%beg = 2
-                else
-                    offset_z%beg = 0
-                end if
-
-                ! Boundary condition at the end
-                if (proc_coords(3) < num_procs_z - 1 .or. bc_z%end == -1) then
-                    proc_coords(3) = proc_coords(3) + 1
-                    call MPI_CART_RANK(MPI_COMM_CART, proc_coords, &
-                                       bc_z%end, ierr)
-                    proc_coords(3) = proc_coords(3) - 1
-                end if
-
-                ! Ghost zone at the end
-                if (proc_coords(3) < num_procs_z - 1 .and. format == 1) then
-                    offset_z%end = 2
-                else
-                    offset_z%end = 0
-                end if
-
-                if (parallel_io) then
-                    if (proc_coords(3) < rem_cells) then
-                        start_idx(3) = (p + 1)*proc_coords(3)
-                    else
-                        start_idx(3) = (p + 1)*proc_coords(3) + rem_cells
-                    end if
-                end if
-                ! ==================================================================
-
-                ! Generating 2D Cartesian Processor Topology =======================
-
-            else
 
                 ! Initial values of the processor factorization optimization
                 num_procs_x = 1
@@ -590,7 +361,6 @@ contains
                 call MPI_CART_COORDS(MPI_COMM_CART, proc_rank, 2, &
                                      proc_coords, ierr)
 
-            end if
 
             ! END: Generating 2D Cartesian Processor Topology ==================
 
@@ -865,68 +635,7 @@ contains
             end if
 
             ! END: Communications in the y-direction ===========================
-
-            ! Communications in the z-direction ================================
-
-        else
-
-            if (pbc_loc == 'beg') then    ! Buffer region at the beginning
-
-                ! PBC at both ends of the sub-domain
-                if (bc_z%end >= 0) then
-
-                    ! Sending/receiving the data to/from bc_z%end/bc_z%beg
-                    call MPI_SENDRECV(dz(p - buff_size + 1), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 0, &
-                                      dz(-buff_size), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                    ! PBC only at beginning of the sub-domain
-                else
-
-                    ! Sending/receiving the data to/from bc_z%beg/bc_z%beg
-                    call MPI_SENDRECV(dz(0), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
-                                      dz(-buff_size), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                end if
-
-            else                         ! Buffer region at the end
-
-                ! PBC at both ends of the sub-domain
-                if (bc_z%beg >= 0) then
-
-                    ! Sending/receiving the data to/from bc_z%beg/bc_z%end
-                    call MPI_SENDRECV(dz(0), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
-                                      dz(p + 1), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 1, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                    ! PBC only at end of the sub-domain
-                else
-
-                    ! Sending/receiving the data to/from bc_z%end/bc_z%end
-                    call MPI_SENDRECV(dz(p - buff_size + 1), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 0, &
-                                      dz(p + 1), buff_size, &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 1, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                end if
-
-            end if
-
         end if
-
-        ! END: Communications in the z-direction ===========================
 
 #endif
 
@@ -951,7 +660,7 @@ contains
 
 #ifdef MFC_MPI
 
-        integer :: i, j, k, l, r !< Generic loop iterators
+        integer :: i, j, k, r !< Generic loop iterators
 
         ! Communications in the x-direction ================================
 
@@ -963,26 +672,23 @@ contains
                 if (bc_x%end >= 0) then
 
                     ! Packing the data to be sent to bc_x%end
-                    do l = 0, p
                         do k = 0, n
                             do j = m - buff_size + 1, m
                                 do i = 1, sys_size
                                     r = sys_size*(j - m + buff_size - 1) &
-                                        + sys_size*buff_size*k + (i - 1) &
-                                        + sys_size*buff_size*(n + 1)*l
+                                        + sys_size*buff_size*k + (i - 1)
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_x%end/bc_x%beg
                     call MPI_SENDRECV(q_cons_buffer_out(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%end, 0, &
                                       q_cons_buffer_in(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -991,26 +697,23 @@ contains
                 else
 
                     ! Packing the data to be sent to bc_x%beg
-                    do l = 0, p
                         do k = 0, n
                             do j = 0, buff_size - 1
                                 do i = 1, sys_size
                                     r = (i - 1) + sys_size*j &
-                                        + sys_size*buff_size*k &
-                                        + sys_size*buff_size*(n + 1)*l
+                                        + sys_size*buff_size*k
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_x%beg/bc_x%beg
                     call MPI_SENDRECV(q_cons_buffer_out(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%beg, 1, &
                                       q_cons_buffer_in(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -1018,18 +721,15 @@ contains
                 end if
 
                 ! Unpacking the data received from bc_x%beg
-                do l = 0, p
                     do k = 0, n
                         do j = -buff_size, -1
                             do i = 1, sys_size
                                 r = sys_size*(j + buff_size) &
-                                    + sys_size*buff_size*k + (i - 1) &
-                                    + sys_size*buff_size*(n + 1)*l
-                                q_cons_vf(i)%sf(j, k, l) = q_cons_buffer_in(r)
+                                    + sys_size*buff_size*k + (i - 1)
+                                q_cons_vf(i)%sf(j, k) = q_cons_buffer_in(r)
                             end do
                         end do
                     end do
-                end do
 
             else                         ! Buffer region at the end
 
@@ -1037,26 +737,23 @@ contains
                 if (bc_x%beg >= 0) then
 
                     ! Packing the data to be sent to bc_x%beg
-                    do l = 0, p
                         do k = 0, n
                             do j = 0, buff_size - 1
                                 do i = 1, sys_size
                                     r = (i - 1) + sys_size*j &
-                                        + sys_size*buff_size*k &
-                                        + sys_size*buff_size*(n + 1)*l
+                                        + sys_size*buff_size*k
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_x%beg/bc_x%end
                     call MPI_SENDRECV(q_cons_buffer_out(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%beg, 1, &
                                       q_cons_buffer_in(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%end, 1, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -1065,26 +762,23 @@ contains
                 else
 
                     ! Packing the data to be sent to bc_x%end
-                    do l = 0, p
                         do k = 0, n
                             do j = m - buff_size + 1, m
                                 do i = 1, sys_size
                                     r = sys_size*(j - m + buff_size - 1) &
-                                        + sys_size*buff_size*k + (i - 1) &
-                                        + sys_size*buff_size*(n + 1)*l
+                                        + sys_size*buff_size*k + (i - 1)
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_x%end/bc_x%end
                     call MPI_SENDRECV(q_cons_buffer_out(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%end, 0, &
                                       q_cons_buffer_in(0), &
-                                      buff_size*sys_size*(n + 1)*(p + 1), &
+                                      buff_size*sys_size*(n + 1), &
                                       MPI_DOUBLE_PRECISION, bc_x%end, 1, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -1092,18 +786,15 @@ contains
                 end if
 
                 ! Unpacking the data received from bc_x%end
-                do l = 0, p
                     do k = 0, n
                         do j = m + 1, m + buff_size
                             do i = 1, sys_size
                                 r = (i - 1) + sys_size*(j - m - 1) &
-                                    + sys_size*buff_size*k &
-                                    + sys_size*buff_size*(n + 1)*l
-                                q_cons_vf(i)%sf(j, k, l) = q_cons_buffer_in(r)
+                                    + sys_size*buff_size*k
+                                q_cons_vf(i)%sf(j, k) = q_cons_buffer_in(r)
                             end do
                         end do
                     end do
-                end do
 
             end if
 
@@ -1119,29 +810,25 @@ contains
                 if (bc_y%end >= 0) then
 
                     ! Packing the data to be sent to bc_y%end
-                    do l = 0, p
                         do k = n - buff_size + 1, n
                             do j = -buff_size, m + buff_size
                                 do i = 1, sys_size
                                     r = sys_size*(j + buff_size) &
                                         + sys_size*(m + 2*buff_size + 1)* &
-                                        (k - n + buff_size - 1) + (i - 1) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        buff_size*l
+                                        (k - n + buff_size - 1) + (i - 1) 
+                                        
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_y%end/bc_y%beg
                     call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (p + 1), MPI_DOUBLE_PRECISION, &
+                                      sys_size*(m + 2*buff_size + 1), MPI_DOUBLE_PRECISION, &
                                       bc_y%end, 0, q_cons_buffer_in(0), &
                                       buff_size*sys_size* &
-                                      (m + 2*buff_size + 1)*(p + 1), &
+                                      (m + 2*buff_size + 1), &
                                       MPI_DOUBLE_PRECISION, bc_y%beg, 0, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -1150,28 +837,24 @@ contains
                 else
 
                     ! Packing the data to be sent to bc_y%beg
-                    do l = 0, p
                         do k = 0, buff_size - 1
                             do j = -buff_size, m + buff_size
                                 do i = 1, sys_size
                                     r = sys_size*(j + buff_size) &
                                         + sys_size*(m + 2*buff_size + 1)*k &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        buff_size*l + (i - 1)
+                                        + (i - 1)
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_y%beg/bc_y%beg
                     call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (p + 1), MPI_DOUBLE_PRECISION, &
+                                      sys_size*(m + 2*buff_size + 1),  MPI_DOUBLE_PRECISION, &
                                       bc_y%beg, 1, q_cons_buffer_in(0), &
                                       buff_size*sys_size* &
-                                      (m + 2*buff_size + 1)*(p + 1), &
+                                      (m + 2*buff_size + 1), &
                                       MPI_DOUBLE_PRECISION, bc_y%beg, 0, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -1179,19 +862,16 @@ contains
                 end if
 
                 ! Unpacking the data received from bc_y%beg
-                do l = 0, p
                     do k = -buff_size, -1
                         do j = -buff_size, m + buff_size
                             do i = 1, sys_size
                                 r = (i - 1) + sys_size*(j + buff_size) &
                                     + sys_size*(m + 2*buff_size + 1)* &
-                                    (k + buff_size) + sys_size* &
-                                    (m + 2*buff_size + 1)*buff_size*l
-                                q_cons_vf(i)%sf(j, k, l) = q_cons_buffer_in(r)
+                                    (k + buff_size) 
+                                q_cons_vf(i)%sf(j, k) = q_cons_buffer_in(r)
                             end do
                         end do
                     end do
-                end do
 
             else                         ! Buffer region at the end
 
@@ -1199,28 +879,24 @@ contains
                 if (bc_y%beg >= 0) then
 
                     ! Packing the data to be sent to bc_y%beg
-                    do l = 0, p
                         do k = 0, buff_size - 1
                             do j = -buff_size, m + buff_size
                                 do i = 1, sys_size
                                     r = sys_size*(j + buff_size) &
                                         + sys_size*(m + 2*buff_size + 1)*k &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        buff_size*l + (i - 1)
+                                        + (i - 1)
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_y%beg/bc_y%end
                     call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (p + 1), MPI_DOUBLE_PRECISION, &
+                                      sys_size*(m + 2*buff_size + 1), MPI_DOUBLE_PRECISION, &
                                       bc_y%beg, 1, q_cons_buffer_in(0), &
                                       buff_size*sys_size* &
-                                      (m + 2*buff_size + 1)*(p + 1), &
+                                      (m + 2*buff_size + 1), &
                                       MPI_DOUBLE_PRECISION, bc_y%end, 1, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -1229,29 +905,24 @@ contains
                 else
 
                     ! Packing the data to be sent to bc_y%end
-                    do l = 0, p
                         do k = n - buff_size + 1, n
                             do j = -buff_size, m + buff_size
                                 do i = 1, sys_size
                                     r = sys_size*(j + buff_size) &
                                         + sys_size*(m + 2*buff_size + 1)* &
-                                        (k - n + buff_size - 1) + (i - 1) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        buff_size*l
+                                        (k - n + buff_size - 1) + (i - 1)
                                     q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
+                                        q_cons_vf(i)%sf(j, k)
                                 end do
                             end do
                         end do
-                    end do
 
                     ! Sending/receiving the data to/from bc_y%end/bc_y%end
                     call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (p + 1), MPI_DOUBLE_PRECISION, &
+                                      sys_size*(m + 2*buff_size + 1), MPI_DOUBLE_PRECISION, &
                                       bc_y%end, 0, q_cons_buffer_in(0), &
                                       buff_size*sys_size* &
-                                      (m + 2*buff_size + 1)*(p + 1), &
+                                      (m + 2*buff_size + 1), &
                                       MPI_DOUBLE_PRECISION, bc_y%end, 1, &
                                       MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
                                       ierr)
@@ -1259,203 +930,23 @@ contains
                 end if
 
                 ! Unpacking the data received form bc_y%end
-                do l = 0, p
                     do k = n + 1, n + buff_size
                         do j = -buff_size, m + buff_size
                             do i = 1, sys_size
                                 r = (i - 1) + sys_size*(j + buff_size) &
                                     + sys_size*(m + 2*buff_size + 1)* &
-                                    (k - n - 1) + sys_size* &
-                                    (m + 2*buff_size + 1)*buff_size*l
-                                q_cons_vf(i)%sf(j, k, l) = q_cons_buffer_in(r)
+                                    (k - n - 1) 
+                                q_cons_vf(i)%sf(j, k) = q_cons_buffer_in(r)
                             end do
                         end do
                     end do
-                end do
 
             end if
 
             ! END: Communications in the y-direction ===========================
 
-            ! Communications in the z-direction ================================
-
-        else
-
-            if (pbc_loc == 'beg') then    ! Buffer region at the beginning
-
-                ! PBC at both ends of the sub-domain
-                if (bc_z%end >= 0) then
-
-                    ! Packing the data to be sent to bc_z%end
-                    do l = p - buff_size + 1, p
-                        do k = -buff_size, n + buff_size
-                            do j = -buff_size, m + buff_size
-                                do i = 1, sys_size
-                                    r = sys_size*(j + buff_size) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        (k + buff_size) + sys_size* &
-                                        (m + 2*buff_size + 1)* &
-                                        (n + 2*buff_size + 1)* &
-                                        (l - p + buff_size - 1) + (i - 1)
-                                    q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
-                                end do
-                            end do
-                        end do
-                    end do
-
-                    ! Sending/receiving the data to/from bc_z%end/bc_z%beg
-                    call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 0, &
-                                      q_cons_buffer_in(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                    ! PBC only at beginning of the sub-domain
-                else
-
-                    ! Packing the data to be sent to bc_z%beg
-                    do l = 0, buff_size - 1
-                        do k = -buff_size, n + buff_size
-                            do j = -buff_size, m + buff_size
-                                do i = 1, sys_size
-                                    r = sys_size*(j + buff_size) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        (k + buff_size) + (i - 1) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        (n + 2*buff_size + 1)*l
-                                    q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
-                                end do
-                            end do
-                        end do
-                    end do
-
-                    ! Sending/receiving the data to/from bc_z%beg/bc_z%beg
-                    call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
-                                      q_cons_buffer_in(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                end if
-
-                ! Unpacking the data from bc_z%beg
-                do l = -buff_size, -1
-                    do k = -buff_size, n + buff_size
-                        do j = -buff_size, m + buff_size
-                            do i = 1, sys_size
-                                r = sys_size*(j + buff_size) &
-                                    + sys_size*(m + 2*buff_size + 1)* &
-                                    (k + buff_size) + (i - 1) &
-                                    + sys_size*(m + 2*buff_size + 1)* &
-                                    (n + 2*buff_size + 1)*(l + buff_size)
-                                q_cons_vf(i)%sf(j, k, l) = q_cons_buffer_in(r)
-                            end do
-                        end do
-                    end do
-                end do
-
-            else                         ! Buffer region at the end
-
-                ! PBC at both ends of the sub-domain
-                if (bc_z%beg >= 0) then
-
-                    ! Packing the data to be sent to bc_z%beg
-                    do l = 0, buff_size - 1
-                        do k = -buff_size, n + buff_size
-                            do j = -buff_size, m + buff_size
-                                do i = 1, sys_size
-                                    r = sys_size*(j + buff_size) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        (k + buff_size) + (i - 1) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        (n + 2*buff_size + 1)*l
-                                    q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
-                                end do
-                            end do
-                        end do
-                    end do
-
-                    ! Sending/receiving the data to/from bc_z%beg/bc_z%end
-                    call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
-                                      q_cons_buffer_in(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 1, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                    ! PBC only at end of the sub-domain
-                else
-
-                    ! Packing the data to be sent to bc_z%end
-                    do l = p - buff_size + 1, p
-                        do k = -buff_size, n + buff_size
-                            do j = -buff_size, m + buff_size
-                                do i = 1, sys_size
-                                    r = sys_size*(j + buff_size) &
-                                        + sys_size*(m + 2*buff_size + 1)* &
-                                        (k + buff_size) + sys_size* &
-                                        (m + 2*buff_size + 1)* &
-                                        (n + 2*buff_size + 1)* &
-                                        (l - p + buff_size - 1) + (i - 1)
-                                    q_cons_buffer_out(r) = &
-                                        q_cons_vf(i)%sf(j, k, l)
-                                end do
-                            end do
-                        end do
-                    end do
-
-                    ! Sending/receiving the data to/from bc_z%end/bc_z%end
-                    call MPI_SENDRECV(q_cons_buffer_out(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 0, &
-                                      q_cons_buffer_in(0), buff_size* &
-                                      sys_size*(m + 2*buff_size + 1)* &
-                                      (n + 2*buff_size + 1), &
-                                      MPI_DOUBLE_PRECISION, bc_z%end, 1, &
-                                      MPI_COMM_WORLD, MPI_STATUS_IGNORE, &
-                                      ierr)
-
-                end if
-
-                ! Unpacking the data received from bc_z%end
-                do l = p + 1, p + buff_size
-                    do k = -buff_size, n + buff_size
-                        do j = -buff_size, m + buff_size
-                            do i = 1, sys_size
-                                r = sys_size*(j + buff_size) &
-                                    + sys_size*(m + 2*buff_size + 1)* &
-                                    (k + buff_size) + (i - 1) &
-                                    + sys_size*(m + 2*buff_size + 1)* &
-                                    (n + 2*buff_size + 1)*(l - p - 1)
-                                q_cons_vf(i)%sf(j, k, l) = q_cons_buffer_in(r)
-                            end do
-                        end do
-                    end do
-                end do
-
-            end if
-
         end if
 
-        ! END: Communications in the z-direction ===========================
 
 #endif
 
@@ -1509,109 +1000,30 @@ contains
 
 #ifdef MFC_MPI
 
-        ! Simulation is 3D
-        if (p > 0) then
-            if (grid_geometry == 3) then
-                ! Minimum spatial extent in the r-direction
-                call MPI_GATHERV(minval(y_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(1, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
+        ! Minimum spatial extent in the x-direction
+        call MPI_GATHERV(minval(x_cb), 1, MPI_DOUBLE_PRECISION, &
+                         spatial_extents(1, 0), recvcounts, 4*displs, &
+                         MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
+                         ierr)
 
-                ! Minimum spatial extent in the theta-direction
-                call MPI_GATHERV(minval(z_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(2, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
+        ! Minimum spatial extent in the y-direction
+        call MPI_GATHERV(minval(y_cb), 1, MPI_DOUBLE_PRECISION, &
+                         spatial_extents(2, 0), recvcounts, 4*displs, &
+                         MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
+                         ierr)
 
-                ! Minimum spatial extent in the z-direction
-                call MPI_GATHERV(minval(x_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(3, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
+        ! Maximum spatial extent in the x-direction
+        call MPI_GATHERV(maxval(x_cb), 1, MPI_DOUBLE_PRECISION, &
+                         spatial_extents(3, 0), recvcounts, 4*displs, &
+                         MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
+                         ierr)
 
-                ! Maximum spatial extent in the r-direction
-                call MPI_GATHERV(maxval(y_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(4, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
+        ! Maximum spatial extent in the y-direction
+        call MPI_GATHERV(maxval(y_cb), 1, MPI_DOUBLE_PRECISION, &
+                         spatial_extents(4, 0), recvcounts, 4*displs, &
+                         MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
+                         ierr)
 
-                ! Maximum spatial extent in the theta-direction
-                call MPI_GATHERV(maxval(z_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(5, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-
-                ! Maximum spatial extent in the z-direction
-                call MPI_GATHERV(maxval(x_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(6, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-            else
-                ! Minimum spatial extent in the x-direction
-                call MPI_GATHERV(minval(x_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(1, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-
-                ! Minimum spatial extent in the y-direction
-                call MPI_GATHERV(minval(y_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(2, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-
-                ! Minimum spatial extent in the z-direction
-                call MPI_GATHERV(minval(z_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(3, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-
-                ! Maximum spatial extent in the x-direction
-                call MPI_GATHERV(maxval(x_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(4, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-
-                ! Maximum spatial extent in the y-direction
-                call MPI_GATHERV(maxval(y_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(5, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-
-                ! Maximum spatial extent in the z-direction
-                call MPI_GATHERV(maxval(z_cb), 1, MPI_DOUBLE_PRECISION, &
-                                 spatial_extents(6, 0), recvcounts, 6*displs, &
-                                 MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                                 ierr)
-            end if
-            ! Simulation is 2D
-        else
-
-            ! Minimum spatial extent in the x-direction
-            call MPI_GATHERV(minval(x_cb), 1, MPI_DOUBLE_PRECISION, &
-                             spatial_extents(1, 0), recvcounts, 4*displs, &
-                             MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                             ierr)
-
-            ! Minimum spatial extent in the y-direction
-            call MPI_GATHERV(minval(y_cb), 1, MPI_DOUBLE_PRECISION, &
-                             spatial_extents(2, 0), recvcounts, 4*displs, &
-                             MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                             ierr)
-
-            ! Maximum spatial extent in the x-direction
-            call MPI_GATHERV(maxval(x_cb), 1, MPI_DOUBLE_PRECISION, &
-                             spatial_extents(3, 0), recvcounts, 4*displs, &
-                             MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                             ierr)
-
-            ! Maximum spatial extent in the y-direction
-            call MPI_GATHERV(maxval(y_cb), 1, MPI_DOUBLE_PRECISION, &
-                             spatial_extents(4, 0), recvcounts, 4*displs, &
-                             MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, &
-                             ierr)
-
-        end if
 
 #endif
 

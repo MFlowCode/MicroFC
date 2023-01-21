@@ -48,8 +48,8 @@ module m_global_parameters
 
     !> @name Cell-boundary locations in the x-, y- and z-coordinate directions
     !> @{
-    real(kind(0d0)), allocatable, dimension(:) :: x_cb, x_root_cb, y_cb, z_cb
-    real(kind(0d0)), allocatable, dimension(:) :: coarse_x_cb, coarse_y_cb, coarse_z_cb
+    real(kind(0d0)), allocatable, dimension(:) :: x_cb, x_root_cb, y_cb
+    real(kind(0d0)), allocatable, dimension(:) :: coarse_x_cb, coarse_y_cb
     !> @}
 
     !> @name Cell-center locations in the x-, y- and z-coordinate directions
@@ -96,7 +96,7 @@ module m_global_parameters
 
     !> @name Boundary conditions in the x-, y- and z-coordinate directions
     !> @{
-    type(int_bounds_info) :: bc_x, bc_y, bc_z
+    type(int_bounds_info) :: bc_x, bc_y
     !> @}
 
     logical :: parallel_io    !< Format of the data files
@@ -223,7 +223,6 @@ contains
         ! Computational domain parameters
         m = dflt_int; n = 0
         m_root = dflt_int
-        cyl_coord = .false.
 
         t_step_start = dflt_int
         t_step_stop = dflt_int
@@ -232,7 +231,6 @@ contains
         ! Simulation algorithm parameters
         num_fluids = dflt_int
         weno_order = dflt_int
-        mixture_err = .false.
 
         bc_x%beg = dflt_int
         bc_x%end = dflt_int
@@ -243,7 +241,6 @@ contains
         do i = 1, num_fluids_max
             fluid_pp(i)%gamma = dflt_real
             fluid_pp(i)%pi_inf = dflt_real
-            fluid_pp(i)%G = dflt_real
         end do
 
         ! Formatted database file(s) structure parameters
@@ -279,16 +276,6 @@ contains
 
         fd_order = dflt_int
 
-        ! Tait EOS
-        rhoref = dflt_real
-        pref = dflt_real
-
-        ! Bubble modeling
-        bubbles = .false.
-        R0ref = dflt_real
-        nb = dflt_int
-        polydisperse = .false.
-        poly_sigma = dflt_real
 
     end subroutine s_assign_default_values_to_user_inputs ! ----------------
 
@@ -330,7 +317,7 @@ contains
         allocate (MPI_IO_DATA%var(1:sys_size))
 
         do i = 1, sys_size
-            allocate (MPI_IO_DATA%var(i)%sf(0:m, 0:n, 0:p))
+            allocate (MPI_IO_DATA%var(i)%sf(0:m, 0:n))
             MPI_IO_DATA%var(i)%sf => null()
         end do
 
@@ -347,13 +334,6 @@ contains
             offset_x%end = 0
             offset_y%beg = 0
             offset_y%end = 0
-            offset_z%beg = 0
-            offset_z%end = 0
-
-        elseif (p == 0) then
-
-            offset_z%beg = 0
-            offset_z%end = 0
 
         end if
 
@@ -364,7 +344,7 @@ contains
         ! used for the computation of vorticity and/or numerical Schlieren
         ! function.
         buff_size = max(offset_x%beg, offset_x%end, offset_y%beg, &
-                        offset_y%end, offset_z%beg, offset_z%end)
+                        offset_y%end)
 
         if (any(omega_wrt) .or. schlieren_wrt) then
             fd_number = max(1, fd_order/2)
@@ -383,12 +363,6 @@ contains
             allocate (y_cc(-buff_size:n + buff_size))
             allocate (dy(-buff_size:n + buff_size))
 
-            if (p > 0) then
-                allocate (z_cb(-1 - offset_z%beg:p + offset_z%end))
-                allocate (z_cc(-buff_size:p + buff_size))
-                allocate (dz(-buff_size:p + buff_size))
-            end if
-
             ! Allocating the grid variables, only used for the 1D simulations,
             ! and containing the defragmented computational domain grid data
         else
@@ -402,46 +376,16 @@ contains
             allocate (coarse_x_cb(-1 - offset_x%beg:(m/2) + offset_x%end))
             if (n > 0) then
                 allocate (coarse_y_cb(-1 - offset_y%beg:(n/2) + offset_y%end))
-                if (p > 0) allocate (coarse_z_cb(-1 - offset_z%beg:(p/2) + offset_z%end))
             end if
-        end if
-
-        if (cyl_coord .neqv. .true.) then ! Cartesian grid
-            grid_geometry = 1
-        elseif (cyl_coord .and. p == 0) then ! Axisymmetric cylindrical grid
-            grid_geometry = 2
-        else ! Fully 3D cylindrical grid
-            grid_geometry = 3
         end if
 
     end subroutine s_initialize_global_parameters_module ! --------------------
 
 
-    !> Subroutine to compute the transfer coefficient for non-polytropic gas modeling
-    subroutine s_transcoeff(omega, peclet, Re_trans, Im_trans)
-
-        real(kind(0.d0)), intent(IN) :: omega
-        real(kind(0.d0)), intent(IN) :: peclet
-        real(kind(0.d0)), intent(OUT) :: Re_trans
-        real(kind(0.d0)), intent(OUT) :: Im_trans
-        complex :: trans, c1, c2, c3
-        complex :: imag = (0., 1.)
-        real(kind(0.d0)) :: f_transcoeff
-
-        c1 = imag*omega*peclet
-        c2 = CSQRT(c1)
-        c3 = (CEXP(c2) - CEXP(-c2))/(CEXP(c2) + CEXP(-c2)) ! TANH(c2)
-        trans = ((c2/c3 - 1.d0)**(-1) - 3.d0/c1)**(-1) ! transfer function
-
-        Re_trans = dble(trans)
-        Im_trans = aimag(trans)
-
-    end subroutine s_transcoeff
-
     !> Subroutine to initialize parallel infrastructure
     subroutine s_initialize_parallel_io() ! --------------------------------
 
-        num_dims = 1 + min(1, n) + min(1, p)
+        num_dims = 1 + min(1, n) 
 
         allocate (proc_coords(1:num_dims))
 
@@ -479,8 +423,6 @@ contains
 
             deallocate (y_cb, y_cc, dy)
 
-            if (p > 0) deallocate (z_cb, z_cc, dz)
-
             ! Deallocating the grid variables, only used for the 1D simulations,
             ! and containing the defragmented computational domain grid data
         else
@@ -493,7 +435,6 @@ contains
             deallocate (coarse_x_cb)
             if (n > 0) then
                 deallocate (coarse_y_cb)
-                if (p > 0) deallocate (coarse_z_cb)
             end if
         end if
 
