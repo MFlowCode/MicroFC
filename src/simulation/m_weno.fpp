@@ -233,22 +233,6 @@ contains
                                                           (s_cb(i - 1) - s_cb(i + 1))**2d0
 
                     end do
-
-                    ! Modifying the ideal weights coefficients in the neighborhood
-                    ! of beginning and end Riemann state extrapolation BC to avoid
-                    ! any contributions from outside of the physical domain during
-                    ! the WENO reconstruction
-                    if (null_weights) then
-                        if (bc_s%beg == -4) then
-                            d_cbR_${XYZ}$ (1, 0) = 0d0; d_cbR_${XYZ}$ (0, 0) = 1d0
-                            d_cbL_${XYZ}$ (1, 0) = 0d0; d_cbL_${XYZ}$ (0, 0) = 1d0
-                        end if
-
-                        if (bc_s%end == -4) then
-                            d_cbR_${XYZ}$ (0, s) = 0d0; d_cbR_${XYZ}$ (1, s) = 1d0
-                            d_cbL_${XYZ}$ (0, s) = 0d0; d_cbL_${XYZ}$ (1, s) = 1d0
-                        end if
-                    end if
                     ! END: Computing WENO3 Coefficients ================================
 
                     ! Computing WENO5 Coefficients =====================================
@@ -379,26 +363,6 @@ contains
                                                                                      s_cb(i))**2d0*(s_cb(i - 2) - s_cb(i + 1))**2d0)
 
                     end do
-
-                    ! Modifying the ideal weights coefficients in the neighborhood
-                    ! of beginning and end Riemann state extrapolation BC to avoid
-                    ! any contributions from outside of the physical domain during
-                    ! the WENO reconstruction
-                    if (null_weights) then
-                        if (bc_s%beg == -4) then
-                            d_cbR_${XYZ}$ (1:2, 0) = 0d0; d_cbR_${XYZ}$ (0, 0) = 1d0
-                            d_cbL_${XYZ}$ (1:2, 0) = 0d0; d_cbL_${XYZ}$ (0, 0) = 1d0
-                            d_cbR_${XYZ}$ (2, 1) = 0d0; d_cbR_${XYZ}$ (:, 1) = d_cbR_${XYZ}$ (:, 1)/sum(d_cbR_${XYZ}$ (:, 1))
-                            d_cbL_${XYZ}$ (2, 1) = 0d0; d_cbL_${XYZ}$ (:, 1) = d_cbL_${XYZ}$ (:, 1)/sum(d_cbL_${XYZ}$ (:, 1))
-                        end if
-
-                        if (bc_s%end == -4) then
-                            d_cbR_${XYZ}$ (0, s - 1) = 0d0; d_cbR_${XYZ}$ (:, s - 1) = d_cbR_${XYZ}$ (:, s - 1)/sum(d_cbR_${XYZ}$ (:, s - 1))
-                            d_cbL_${XYZ}$ (0, s - 1) = 0d0; d_cbL_${XYZ}$ (:, s - 1) = d_cbL_${XYZ}$ (:, s - 1)/sum(d_cbL_${XYZ}$ (:, s - 1))
-                            d_cbR_${XYZ}$ (0:1, s) = 0d0; d_cbR_${XYZ}$ (2, s) = 1d0
-                            d_cbL_${XYZ}$ (0:1, s) = 0d0; d_cbL_${XYZ}$ (2, s) = 1d0
-                        end if
-                    end if
                 end if
             end if
         #:endfor

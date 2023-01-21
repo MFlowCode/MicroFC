@@ -18,7 +18,6 @@ print(json.dumps({
     'y_domain%end'                 : 0.250000000000000E+00,
     'm'                            : 319,
     'n'                            : 159,
-    'p'                            : 0,
     'dt'                           : 10.000000000000000E-7,
     't_step_start'                 : 0,
     't_step_stop'                  : int(4E5),
@@ -26,18 +25,12 @@ print(json.dumps({
     # ==========================================================================
 
     # Simulation Algorithm Parameters ==========================================
-    'model_eqns'                   : 2,
     'num_fluids'                   : 2,
     'num_patches'                  : 2,
     'adv_alphan'                   : 'T',
-    'mpp_lim'                      : 'T',
-    'mixture_err'                  : 'T',
     'time_stepper'                 : 3,
-    'weno_vars'                    : 2,
     'weno_order'                   : 5,
     'weno_eps'                     : 1.00000000000000E-16,
-    'mapped_weno'                  :'T',
-    'riemann_solver'               : 2,
     'wave_speeds'                  : 1,
     'avg_state'                    : 2,
     'bc_x%beg'                     :-1,

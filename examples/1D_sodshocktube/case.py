@@ -36,7 +36,6 @@ print(json.dumps({
     'weno_vars'                    : 2,
     'weno_order'                   : 5,
     'weno_eps'                     : 1.E-16,
-    'null_weights'                 : 'F',
     'wave_speeds'                  : 1,
     'avg_state'                    : 2,
     'bc_x%beg'                     : -3,

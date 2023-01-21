@@ -91,7 +91,6 @@ module m_global_parameters
     integer :: num_fluids     !< Number of fluids in the flow
     logical :: adv_alphan     !< Advection of the last volume fraction
     integer :: time_stepper   !< Time-stepper algorithm
-    integer :: weno_vars      !< WENO-reconstructed state variables type
 
     #:if MFC_CASE_OPTIMIZATION
         integer, parameter :: weno_polyn = ${weno_polyn}$ !< Degree of the WENO polynomials (polyn)
@@ -105,7 +104,6 @@ module m_global_parameters
     logical :: weno_Re_flux   !< WENO reconstruct velocity gradients for viscous stress tensor
     integer :: wave_speeds    !< Wave speeds estimation method
     integer :: avg_state      !< Average state evaluation method
-    logical :: null_weights   !< Null undesired WENO weights
 
     integer :: cpu_start, cpu_end, cpu_rate
 
@@ -256,12 +254,10 @@ contains
         num_fluids = dflt_int
         adv_alphan = .false.
         time_stepper = dflt_int
-        weno_vars = dflt_int
         weno_eps = dflt_real
         weno_Re_flux = .false.
         wave_speeds = dflt_int
         avg_state = dflt_int
-        null_weights = .false.
         parallel_io = .false.
         precision = 2
         cu_mpi = .false.

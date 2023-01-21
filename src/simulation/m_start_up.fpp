@@ -75,7 +75,7 @@ contains
         namelist /user_inputs/ case_dir, run_time_info, m, n, dt, &
             t_step_start, t_step_stop, t_step_save, &
             num_fluids, adv_alphan, &
-            time_stepper, weno_vars, &
+            time_stepper, &
             weno_eps, weno_flat, riemann_flat, cu_mpi, &
             wave_speeds, avg_state, &
             bc_x, bc_y, &
@@ -85,7 +85,7 @@ contains
 #:if not MFC_CASE_OPTIMIZATION
             weno_order, &
 #:endif
-            null_weights, precision, parallel_io 
+            precision, parallel_io 
 
 
         ! Checking that an input file has been provided by the user. If it
@@ -186,9 +186,6 @@ contains
                 print '(A)', 'Unsupported value of time_stepper. Exiting ...'
                 call s_mpi_abort()
             end if
-        elseif (all(weno_vars /= (/1, 2/))) then
-            print '(A)', 'Unsupported value of weno_vars. Exiting ...'
-            call s_mpi_abort()
         elseif (all(weno_order /= (/1, 3, 5/))) then
             print '(A)', 'Unsupported value of weno_order. Exiting ...'
             call s_mpi_abort()
