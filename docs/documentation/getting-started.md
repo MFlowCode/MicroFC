@@ -2,7 +2,7 @@
 
 ## Build Environment
 
-MFC can be built in multiple ways on various operating systems. Please select your desired configuration from the list bellow:
+MicroFC can be built in multiple ways on various operating systems. Please select your desired configuration from the list bellow:
 
 <details>
   <summary><h2>*nix</h2></summary>
@@ -35,7 +35,7 @@ $ sudo pacman -S base-devel coreutils  \
                  wget tree
 ```
 
-If you wish to build MFC using [NVidia's NVHPC SDK](https://developer.nvidia.com/hpc-sdk),
+If you wish to build MicroFC using [NVidia's NVHPC SDK](https://developer.nvidia.com/hpc-sdk),
 first follow the instructions [here](https://developer.nvidia.com/nvidia-hpc-sdk-downloads).
 
 </details>
@@ -43,8 +43,7 @@ first follow the instructions [here](https://developer.nvidia.com/nvidia-hpc-sdk
 <details>
   <summary><h2>Windows</h2></summary>
 
-On Windows, you can either use Intel Compilers with the standard Microsoft toolchain,
-[Docker](https://docs.docker.com/get-docker/) or the
+On Windows, you can either use Intel Compilers with the standard Microsoft toolchain or the
 [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/) for a Linux experience.
 
  <details>
@@ -84,9 +83,6 @@ You can now follow the appropriate instructions for your distribution.
 <details>
   <summary><h3>MacOS (x86 and Apple Silicon)</h3></summary>
 
-**Note:** macOS remains the most difficult platform to consistently compile MFC on.
-If you run into issues, we suggest you try using Docker (instructions above).
-
   - **MacOS v10.15 (Catalina) or newer [ZSH]** (Verify with `echo $SHELL`)
 
 ```console
@@ -122,63 +118,20 @@ $ brew install wget make python make cmake coreutils gcc@$MFC_GCC_VER
 $ HOMEBREW_MAKE_JOBS=$(nproc) brew install --cc=gcc-$MFC_GCC_VER --verbose --build-from-source open-mpi
 ```
 
-They will download the dependencies MFC requires to build itself. `open-mpi` will be compiled from source, using the version of GCC we specified above with the environment variables `HOMEBREW_CC` and `HOMEBREW_CXX`. Building this package might take a while.
+They will download the dependencies MicroFC requires to build itself. `open-mpi` will be compiled from source, using the version of GCC we specified above with the environment variables `HOMEBREW_CC` and `HOMEBREW_CXX`. Building this package might take a while.
 
 </details>
 
-<details>
-  <summary><h3>Docker</h3></summary>
-
-Docker is a lightweight, cross-platform, and performant alternative to Virtual Machines (VMs).
-We build a Docker Image that contains the packages required to build and run MFC on your local machine.
-  
-First install Docker and Git:
-- Windows: [Docker](https://docs.docker.com/get-docker/) + [Git](https://git-scm.com/downloads).
-- macOS: `brew install git docker` (requires [Homebrew](https://brew.sh/)).
-- Other systems:
-```console
-$ sudo apt install git docker # Debian / Ubuntu via Aptitude
-$ sudo pacman -S git docker   # Arch Linux via Pacman
-```
-
-Once Docker and Git are installed on your system, clone MFC with
+## Fetching MicroFC
 
 ```console
-$ git clone https://github.com/MFlowCode/MFC
-$ cd MFC 
+$ git clone https://github.com/MFlowCode/MicroFC.git
+$ cd MicroFC
 ```
 
-To fetch the prebuilt Docker image and enter an interactive bash session with the
-recommended settings applied, run
+## Building MicroFC
 
-```console
-$ ./mfc.sh  docker # If on \*nix/macOS
-  .\mfc.bat docker # If on Windows
-```
-
-We automatically mount and configure the proper permissions in order for you to
-access your local copy of MFC, available at `~/MFC`. You will be logged-in as the
-`me` user with root permissions.
-
-:warning: The state of your container is entirely transient, except for the MFC mount.
-Thus, any modification outside of `~/MFC` should be considered as permanently lost upon
-session exit.
-
-</details>
-
-## Fetching MFC
-
-You can either download MFC's [latest release from GitHub](https://github.com/MFlowCode/MFC/releases/latest) or clone the repository:
-
-```console
-$ git clone https://github.com/MFlowCode/MFC.git
-$ cd MFC
-$ git checkout <release tag>
-```
-
-## Building MFC
-
-MFC can be built with support for various (compile-time) features:
+MicroFC can be built with support for various (compile-time) features:
 
 | Feature   | Enable    | Disable      | Default | Description                                                     |
 | :-------: | :-------: | :----------: | :-----: | --------------------------------------------------------------- |
@@ -215,7 +168,7 @@ Please refer to the [Testing](testing.md) document for more information.
 
 ## Running an Example Case
 
-MFC has example cases in the `examples` folder. You can run such a case interactively using 2 tasks by typing:
+MicroFC has example cases in the `examples` folder. You can run such a case interactively using 2 tasks by typing:
 
 ```console
 $ ./mfc.sh run examples/2D_shockbubble/case.py -n 2

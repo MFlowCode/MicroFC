@@ -4,9 +4,7 @@
 
 - [Getting Started](getting-started.md)
 - [Running MFC](running.md)
-- [Testing MFC](testing.md)
 - [Flow Visualisation](visualisation.md)
-- [MFC's Authors](authors.md)
 - [References](references.md)
 
 ## Code/API Documentation
