@@ -64,36 +64,7 @@ module m_variables_conversion
 
         end subroutine s_convert_xxxxx_to_mixture_variables
 
-        !> The abstract interface to the procedures that are used to compute the
-        !! Roe and the arithmetic average states. For additional information see:
-        !!                 1) s_compute_roe_average_state
-        !!                 2) s_compute_arithmetic_average_state
-        !! @param i Cell location first index
-        !! @param j Cell location second index
-        !! @param k Cell location third index
-        subroutine s_compute_abstract_average_state(i, j)
-
-            integer, intent(IN) :: i, j
-
-        end subroutine s_compute_abstract_average_state
-
     end interface ! ============================================================
-
-    !> @name  Left/right states
-    !> @{
-
-    !> @name Averaged states
-    !> @{
-    real(kind(0d0)), allocatable, dimension(:, :) :: rho_avg_sf !< averaged (Roe/arithmetic) density
-    real(kind(0d0)), allocatable, dimension(:) :: vel_avg    !< averaged (Roe/arithmetic) velocity
-    real(kind(0d0)) :: H_avg      !< averaged (Roe/arithmetic) enthalpy
-    type(scalar_field), allocatable, dimension(:) :: mf_avg_vf  !< averaged (Roe/arithmetic) mass fraction
-    real(kind(0d0)) :: gamma_avg  !< averaged (Roe/arithmetic) specific heat ratio
-    real(kind(0d0)), allocatable, dimension(:, :) :: c_avg_sf   !< averaged (Roe/arithmetic) speed of sound
-
-    real(kind(0d0)) :: alpha_avg !< averaging for bubbly mixture speed of sound
-    real(kind(0d0)) :: pres_avg  !< averaging for bubble mixture speed of sound
-    !> @}
 
     integer, public :: ixb, ixe, iyb, iye
     !$acc declare create(ixb, ixe, iyb, iye)
@@ -114,17 +85,12 @@ module m_variables_conversion
     real(kind(0d0)), allocatable, dimension(:, :), target, public :: gamma_sf !< Scalar sp. heat ratio function
     real(kind(0d0)), allocatable, dimension(:, :), target, public :: pi_inf_sf !< Scalar liquid stiffness function   
 
-    procedure(s_convert_xxxxx_to_mixture_variables), &
-        pointer :: s_convert_to_mixture_variables => null() !<
-
-    procedure(s_compute_abstract_average_state), &
-        pointer :: s_compute_average_state => null() !<
+    procedure(s_convert_xxxxx_to_mixture_variables), pointer :: s_convert_to_mixture_variables => null() 
 
 contains
 
     !>  This procedure conditionally calculates the appropriate pressure
         !! @param energy Energy
-        !! @param alf Void Fraction
         !! @param dyn_p Dynamic Pressure
         !! @param pi_inf Liquid Stiffness
         !! @param gamma Specific Heat Ratio
@@ -132,12 +98,8 @@ contains
     subroutine s_compute_pressure(energy, dyn_p, pi_inf, gamma, pres)      
 !$acc routine seq
 
-        real(kind(0d0)) :: energy
-
-        real(kind(0d0)), intent(IN) :: dyn_p
+        real(kind(0d0)), intent(IN) :: energy, dyn_p, pi_inf, gamma
         real(kind(0d0)), intent(OUT) :: pres
-
-        real(kind(0d0)) :: pi_inf, gamma
 
         pres = (energy - dyn_p - pi_inf)/gamma
 
@@ -145,8 +107,7 @@ contains
 
 
 
-    subroutine s_convert_species_to_mixture_variables(q_vf, k, l,  &
-                                                        rho, gamma, pi_inf, Re_K)
+    subroutine s_convert_species_to_mixture_variables(q_vf, k, l, rho, gamma, pi_inf, Re_K)
 
         type(scalar_field), dimension(sys_size), intent(IN) :: q_vf
 
@@ -294,7 +255,7 @@ contains
        end if
 #endif
 
-        !$acc update device(ixb, ixe, iyb, iye, izb, ize)
+        !$acc update device(ixb, ixe, iyb, iye)
 
         @:ALLOCATE(gammas (1:num_fluids))
         @:ALLOCATE(pi_infs(1:num_fluids))
@@ -321,8 +282,7 @@ contains
 #endif
 
 
-!$acc update device(dt, sys_size, pref, rhoref, gamma_idx, pi_inf_idx, E_idx, avg_state, num_fluids, num_dims, nb, weight, grid_geometry, mapped_weno, mp_weno, weno_eps)
-!$acc update device(gam)
+!$acc update device(dt, sys_size, gamma_idx, pi_inf_idx, E_idx, num_fluids, num_dims, weno_eps)
 
 #ifdef MFC_POST_PROCESS
         ! Allocating the density, the specific heat ratio function and the
@@ -330,37 +290,26 @@ contains
 
         ! Simulation is at least 2D
         if (n > 0) then
-
         ! Simulation is 2D
-
             allocate (rho_sf(-buff_size:m + buff_size, &
                              -buff_size:n + buff_size))
             allocate (gamma_sf(-buff_size:m + buff_size, &
                                -buff_size:n + buff_size ))
             allocate (pi_inf_sf(-buff_size:m + buff_size, &
-                                -buff_size:n + buff_size &
-                                ))
-
-
-            ! Simulation is 1D
+                                -buff_size:n + buff_size ))
+        ! Simulation is 1D
         else
-
             allocate (rho_sf(-buff_size:m + buff_size, &
-                             0:0 &
-                             ))
+                             0:0 ))
             allocate (gamma_sf(-buff_size:m + buff_size, &
-                               0:0 &
-                                ))
+                               0:0 ))
             allocate (pi_inf_sf(-buff_size:m + buff_size, &
-                                0:0 &
-                                ))
-
+                                0:0 ))
         end if
 #endif
 
         ! Volume fraction model
-        s_convert_to_mixture_variables => &
-            s_convert_species_to_mixture_variables
+        s_convert_to_mixture_variables => s_convert_species_to_mixture_variables
 
     end subroutine s_initialize_variables_conversion_module ! --------------
 

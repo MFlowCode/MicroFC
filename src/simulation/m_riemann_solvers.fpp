@@ -2,23 +2,7 @@
 !! @file m_riemann_solvers.f90
 !! @brief Contains module m_riemann_solvers
 
-!> @brief This module features a database of approximate and exact Riemann
-!!              problem solvers for the Navier-Stokes system of equations, which
-!!              is supplemented by appropriate advection equations that are used
-!!              to capture the material interfaces. The closure of the system is
-!!              achieved by the stiffened gas equation of state and any required
-!!              mixture relations. Surface tension effects are accounted for and
-!!              are modeled by means of a volume force acting across the diffuse
-!!              material interface region. The implementation details of viscous
-!!              and capillary effects, into the Riemann solvers, may be found in
-!!              Perigaud and Saurel (2005). Note that both effects are available
-!!              only in the volume fraction model. At this time, the approximate
-!!              and exact Riemann solvers that are listed below are available:
-!!                  1) Harten-Lax-van Leer (HLL)
-!!                  2) Harten-Lax-van Leer-Contact (HLLC)
-!!                  3) Exact
-#:include 'inline_riemann.fpp'
-
+!> @brief This module features Riemann solvers
 module m_riemann_solvers
 
     ! Dependencies =============================================================
@@ -97,19 +81,6 @@ module m_riemann_solvers
 
         end subroutine s_abstract_riemann_solver
 
-        !> The abstract interface to the subroutines that are utilized to compute
-        !! the wave speeds of the Riemann problem either directly or by the means
-        !! of pressure-velocity estimates. For more information please refer to:
-        !!      1) s_compute_direct_wave_speeds
-        !!      2) s_compute_pressure_velocity_wave_speeds
-        !!  @param i First coordinate location index
-        !!  @param j Second coordinate location index
-        !!  @param k Third coordinate location index
-        subroutine s_compute_abstract_wave_speeds(i, j, k)
-
-            integer, intent(IN) :: i, j, k
-
-        end subroutine s_compute_abstract_wave_speeds
 
         !> The abstract interface to the subroutines that are utilized to compute
         !! the viscous source fluxes for either Cartesian or cylindrical geometries.
@@ -236,11 +207,6 @@ module m_riemann_solvers
     !! Pointer to the procedure that is utilized to calculate either the HLL,
     !! HLLC or exact intercell fluxes, based on the choice of Riemann solver
 
-    procedure(s_compute_abstract_wave_speeds), &
-        pointer :: s_compute_wave_speeds => null() !<
-    !! Pointer to the subroutine that is utilized to compute the wave speeds of
-    !! the Riemann problem either directly or by the means of pressure-velocity
-    !! estimates, based on the selected method of estimation of the wave speeds
 
     procedure(s_compute_abstract_viscous_source_flux), &
         pointer :: s_compute_viscous_source_flux => null() !<
@@ -424,15 +390,19 @@ contains
                             H_L = (E_L + pres_L)/rho_L
                             H_R = (E_R + pres_R)/rho_R
 
-                            @:compute_average_state()
+                            rho_avg = 5d-1*(rho_L + rho_R)
+                            vel_avg_rms = 0d0
+                            !$acc loop seq
+                            do i = 1, num_dims
+                                vel_avg_rms = vel_avg_rms + (5d-1*(vel_L(i) + vel_R(i)))**2d0
+                            end do
 
-
+                            H_avg = 5d-1*(H_L + H_R)
+                            gamma_avg = 5d-1*(gamma_L + gamma_R)
                             c_avg = sqrt((H_avg - 5d-1*vel_avg_rms)/gamma_avg)
 
                             c_L = ((H_L - 5d-1*vel_L_rms)/gamma_L)
-
                             c_R = ((H_R - 5d-1*vel_R_rms)/gamma_R)
-
                             c_L = sqrt(c_L)
                             c_R = sqrt(c_R)
 
@@ -443,38 +413,16 @@ contains
                                 end do
                             end if
 
-                            if (wave_speeds == 1) then
-                                s_L = min(vel_L(idx1) - c_L, vel_R(idx1) - c_R)
-                                s_R = max(vel_R(idx1) + c_R, vel_L(idx1) + c_L)
+                            s_L = min(vel_L(idx1) - c_L, vel_R(idx1) - c_R)
+                            s_R = max(vel_R(idx1) + c_R, vel_L(idx1) + c_L)
 
-                                s_S = (pres_R - pres_L + rho_L*vel_L(idx1)* &
-                                       (s_L - vel_L(idx1)) - &
-                                       rho_R*vel_R(idx1)* &
-                                       (s_R - vel_R(idx1))) &
-                                      /(rho_L*(s_L - vel_L(idx1)) - &
-                                        rho_R*(s_R - vel_R(idx1)))
+                            s_S = (pres_R - pres_L + rho_L*vel_L(idx1)* &
+                                   (s_L - vel_L(idx1)) - &
+                                   rho_R*vel_R(idx1)* &
+                                   (s_R - vel_R(idx1))) &
+                                  /(rho_L*(s_L - vel_L(idx1)) - &
+                                    rho_R*(s_R - vel_R(idx1)))
 
-                            elseif (wave_speeds == 2) then
-                                pres_SL = 5d-1*(pres_L + pres_R + rho_avg*c_avg* &
-                                                (vel_L(idx1) - &
-                                                 vel_R(idx1)))
-
-                                pres_SR = pres_SL
-
-                                Ms_L = max(1d0, sqrt(1d0 + ((5d-1 + gamma_L)/(1d0 + gamma_L))* &
-                                                     (pres_SL/pres_L - 1d0)*pres_L/ &
-                                                     ((pres_L + pi_inf_L/(1d0 + gamma_L)))))
-                                Ms_R = max(1d0, sqrt(1d0 + ((5d-1 + gamma_R)/(1d0 + gamma_R))* &
-                                                     (pres_SR/pres_R - 1d0)*pres_R/ &
-                                                     ((pres_R + pi_inf_R/(1d0 + gamma_R)))))
-
-                                s_L = vel_L(idx1) - c_L*Ms_L
-                                s_R = vel_R(idx1) + c_R*Ms_R
-
-                                s_S = 5d-1*((vel_L(idx1) + vel_R(idx1)) + &
-                                            (pres_L - pres_R)/ &
-                                            (rho_avg*c_avg))
-                            end if
 
                             ! follows Einfeldt et al.
                             ! s_M/P = min/max(0.,s_L/R)
@@ -1258,10 +1206,6 @@ contains
         ! Disassociating procedural pointer to the subroutine which was
         ! utilized to calculate the solution of a given Riemann problem
         s_riemann_solver => null()
-
-        ! Disassociating the procedural pointers to the procedures that were
-        ! utilized to compute the average state and estimate the wave speeds
-        s_compute_wave_speeds => null()
 
         ! Disassociating procedural pointer to the subroutine which was
         ! utilized to calculate the viscous source flux

@@ -76,7 +76,6 @@ contains
             t_step_start, t_step_stop, t_step_save, &
             num_fluids, time_stepper, &
             weno_eps, weno_flat, riemann_flat, cu_mpi, &
-            wave_speeds, avg_state, &
             bc_x, bc_y, fluid_pp, probe_wrt, &
             fd_order, probe, num_probes, t_step_old, &
             weno_Re_flux, &
@@ -197,12 +196,6 @@ contains
             call s_mpi_abort()
         elseif (weno_eps <= 0d0 .or. weno_eps > 1d-6) then
             print '(A)', 'Unsupported value of weno_eps. Exiting ...'
-            call s_mpi_abort()
-        elseif (all(wave_speeds /= (/dflt_int, 1, 2/))) then
-            print '(A)', 'Unsupported value of wave_speeds. Exiting ...'
-            call s_mpi_abort()
-        elseif (all(avg_state /= (/dflt_int, 1, 2/))) then
-            print '(A)', 'Unsupported value of avg_state. Exiting ...'
             call s_mpi_abort()
         elseif (bc_x%beg < -12 .or. bc_x%beg > -1) then
             print '(A)', 'Unsupported value of bc_x%beg. Exiting ...'

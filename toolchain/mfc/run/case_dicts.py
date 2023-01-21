@@ -58,10 +58,9 @@ for p_id in range(1, 10+1):
 
 
 SIMULATION = COMMON + [
-    'run_time_info', 't_step_old', 't_tol', 'dt', 't_step_start',
+    'run_time_info', 't_step_old', 'dt', 't_step_start',
     't_step_stop', 't_step_save', 'time_stepper', 'weno_eps',
-    'weno_avg', 'weno_Re_flux', 'wave_speeds', 'avg_state',
-    'fd_order', 'num_probes', 'probe_wrt', 'cu_mpi'
+    'weno_avg', 'weno_Re_flux', 'fd_order', 'num_probes', 'probe_wrt', 'cu_mpi'
 ]
 
 for cmp in ["x", "y"]:

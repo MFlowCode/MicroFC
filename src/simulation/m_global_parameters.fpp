@@ -101,8 +101,6 @@ module m_global_parameters
 
     real(kind(0d0)) :: weno_eps       !< Binding for the WENO nonlinear weights
     logical :: weno_Re_flux   !< WENO reconstruct velocity gradients for viscous stress tensor
-    integer :: wave_speeds    !< Wave speeds estimation method
-    integer :: avg_state      !< Average state evaluation method
 
     integer :: cpu_start, cpu_end, cpu_rate
 
@@ -110,7 +108,7 @@ module m_global_parameters
         !$acc declare create(num_dims, weno_polyn, weno_order)
     #:endif
 
-!$acc declare create(num_fluids, avg_state, weno_eps)
+!$acc declare create(num_fluids, weno_eps)
 
     !> @name Boundary conditions (BC) in the x-, y- and z-directions, respectively
     !> @{
@@ -254,8 +252,6 @@ contains
         time_stepper = dflt_int
         weno_eps = dflt_real
         weno_Re_flux = .false.
-        wave_speeds = dflt_int
-        avg_state = dflt_int
         parallel_io = .false.
         precision = 2
         cu_mpi = .false.

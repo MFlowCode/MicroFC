@@ -24,8 +24,6 @@ print(json.dumps({
     'time_stepper'                 : 3,
     'weno_order'                   : 5,
     'weno_eps'                     : 1.E-16,
-    'wave_speeds'                  : 1,
-    'avg_state'                    : 2,
     'bc_x%beg'                     : -3,
     'bc_x%end'                     : -3,
     # ==========================================================================
