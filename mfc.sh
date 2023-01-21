@@ -241,34 +241,6 @@ elif [ "$1" == "cloc" ]; then
          --fullpath --not-match-d=src/*/*/autogen
 
     exit $?
-elif [ "$1" == "docker" ]; then
-    shift;
-
-    if ! command -v docker > /dev/null 2>&1; then
-        error "$MAGENTA""Docker$COLOR_RESET is not installed."
-
-        exit 1
-    fi
-
-    log "Running in$MAGENTA Docker$COLOR_RESET mode."
-    log "  - Fetching image..."
-    if ! docker pull henryleberre/mfc; then
-        error "Failed to fetch$MAGENTA Docker$COLOR_RESET image from$MAGENTA Docker Hub$COLOR_RESET."
-
-        exit 1
-    fi
-
-    log "  - Starting container..."
-    docker run --interactive --tty --rm                              \
-               --mount type=bind,source="$(pwd)",target=/home/me/MFC \
-               henryleberre/mfc
-    if (($?)); then
-        error "Failed to start Docker container."
-
-        exit 1
-    fi
-
-    exit 0
 fi
 
 
