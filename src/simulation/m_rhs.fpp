@@ -105,15 +105,14 @@ module m_rhs
     type(vector_field), allocatable, dimension(:) :: gm_alphaR_n
     !> @}
 
-    !> @name The cell-boundary values of the fluxes (src - source, gsrc - geometrical
-    !! source). These are computed by applying the chosen Riemann problem solver
+    !> @name The cell-boundary values of the fluxes (src - source). 
+    !! These are computed by applying the chosen Riemann problem solver
     !! on the left and right cell-boundary values of the primitive variables,
     !! qK_prim_n, the first-order spatial derivatives, dqK_prim_ds_n, as
     !! well as the curvature of volume fractions, kappaK_n.
     !> @{
     type(vector_field), allocatable, dimension(:) :: flux_n
     type(vector_field), allocatable, dimension(:) :: flux_src_n
-    type(vector_field), allocatable, dimension(:) :: flux_gsrc_n
     !> @}
 
     !> @name Additional field for capillary source terms
@@ -157,7 +156,7 @@ module m_rhs
 !$acc declare create(q_cons_qp,q_prim_qp,qL_cons_n,qR_cons_n,qL_prim_n,qR_prim_n,  &
 !$acc   dq_prim_dx_qp,dq_prim_dy_qp,gm_vel_qp,dqL_prim_dx_n,dqL_prim_dy_n, &
 !$acc   dqR_prim_dx_n,dqR_prim_dy_n,gm_alpha_qp,       &
-!$acc   gm_alphaL_n,gm_alphaR_n,flux_n,flux_src_n,flux_gsrc_n,       &
+!$acc   gm_alphaL_n,gm_alphaR_n,flux_n,flux_src_n,       &
 !$acc   tau_Re_vf,qL_prim, qR_prim, iv,ix, iy,is1,is2, &
 !$acc   myflux_vf, myflux_src_vf,alf_sum, &
 !$acc   blkmod1, blkmod2, alpha1, alpha2, qL_rsx_vf, qL_rsy_vf, qR_rsx_vf, qR_rsy_vf, &
@@ -382,16 +381,14 @@ contains
 
         ! ==================================================================
 
-        ! Allocation/Association of flux_n, flux_src_n, and flux_gsrc_n ===
+        ! Allocation/Association of flux_n, flux_src_n===
         @:ALLOCATE(flux_n(1:num_dims))
         @:ALLOCATE(flux_src_n(1:num_dims))
-        @:ALLOCATE(flux_gsrc_n(1:num_dims))
 
         do i = 1, num_dims
 
             @:ALLOCATE(flux_n(i)%vf(1:sys_size))
             @:ALLOCATE(flux_src_n(i)%vf(1:sys_size))
-            @:ALLOCATE(flux_gsrc_n(i)%vf(1:sys_size))
 
             if (i == 1) then
 
@@ -399,9 +396,6 @@ contains
                     @:ALLOCATE(flux_n(i)%vf(l)%sf( &
                              & ix%beg:ix%end, &
                              & iy%beg:iy%end ))
-                    @:ALLOCATE(flux_gsrc_n(i)%vf(l)%sf( &
-                            & ix%beg:ix%end, &
-                            & iy%beg:iy%end ))
                 end do
 
                 if (any(Re_size > 0)) then
@@ -424,11 +418,6 @@ contains
 
             else
                 do l = 1, sys_size
-                    @:ALLOCATE(flux_gsrc_n(i)%vf(l)%sf( &
-                              ix%beg:ix%end, &
-                              iy%beg:iy%end))
-                end do
-                do l = 1, sys_size
                     flux_n(i)%vf(l)%sf => &
                         flux_n(1)%vf(l)%sf
                     flux_src_n(i)%vf(l)%sf => &
@@ -440,7 +429,7 @@ contains
             end if
         end do
 
-        ! END: Allocation/Association of flux_n, flux_src_n, and flux_gsrc_n ===
+        ! END: Allocation/Association of flux_n, flux_src_n ===
         @:ALLOCATE(gamma_min(1:num_fluids), pres_inf(1:num_fluids))
 
         do i = 1, num_fluids
@@ -471,20 +460,6 @@ contains
         ! that will be utilized in the conversion to the mixture variables
         s_convert_to_mixture_variables => &
             s_convert_species_to_mixture_variables
-
-        !$acc parallel loop collapse(4) gang vector default(present)
-        do i = 1, sys_size
-                do k = starty, n - starty
-                    do j = startx, m - startx
-                        flux_gsrc_n(1)%vf(i)%sf(j, k) = 0d0
-
-                        if (n > 0) then
-                            flux_gsrc_n(2)%vf(i)%sf(j, k) = 0d0
-                        end if
-
-                    end do
-            end do
-        end do
 
     end subroutine s_initialize_rhs_module ! -------------------------------
 
@@ -645,7 +620,6 @@ contains
                                   q_prim_qp%vf, &
                                   flux_n(id)%vf, &
                                   flux_src_n(id)%vf, &
-                                  flux_gsrc_n(id)%vf, &
                                   id, ix, iy)
             call nvtxEndRange
 
@@ -1142,12 +1116,10 @@ contains
                 do l = 1, sys_size
                     nullify (flux_n(i)%vf(l)%sf)
                     nullify (flux_src_n(i)%vf(l)%sf)
-                    @:DEALLOCATE(flux_gsrc_n(i)%vf(l)%sf)
                 end do
             else
                 do l = 1, sys_size
                     @:DEALLOCATE(flux_n(i)%vf(l)%sf)
-                    @:DEALLOCATE(flux_gsrc_n(i)%vf(l)%sf)
                 end do
 
                 if (any(Re_size > 0)) then
@@ -1163,10 +1135,10 @@ contains
                 @:DEALLOCATE(flux_src_n(i)%vf(adv_idx%beg)%sf)
             end if
 
-            @:DEALLOCATE(flux_n(i)%vf, flux_src_n(i)%vf, flux_gsrc_n(i)%vf)
+            @:DEALLOCATE(flux_n(i)%vf, flux_src_n(i)%vf)
         end do
 
-        @:DEALLOCATE(flux_n, flux_src_n, flux_gsrc_n)
+        @:DEALLOCATE(flux_n, flux_src_n)
 
         s_riemann_solver => null()
         s_convert_to_mixture_variables => null()

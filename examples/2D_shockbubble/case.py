@@ -43,7 +43,6 @@ print(json.dumps({
     # Simulation Algorithm Parameters ==========================================
     'num_patches'                  : 3,
     'num_fluids'                   : 2,
-    'adv_alphan'                   : 'T',
     'time_stepper'                 : 3,
     'weno_order'                   : 5,
     'weno_eps'                     : 1.E-16,

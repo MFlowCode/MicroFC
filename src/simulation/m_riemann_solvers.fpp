@@ -61,7 +61,6 @@ module m_riemann_solvers
         !!  @param gm_alphaR_vf Right averaged gradient magnitude
         !!  @param flux_vf Intra-cell fluxes
         !!  @param flux_src_vf Intra-cell fluxes sources
-        !!  @param flux_gsrc_vf Intra-cell geometric fluxes sources
         !!  @param norm_dir Dir. splitting direction
         !!  @param ix Index bounds in the x-dir
         !!  @param iy Index bounds in the y-dir
@@ -74,7 +73,6 @@ module m_riemann_solvers
                                              qR_prim_vf, &
                                              q_prim_vf, &
                                              flux_vf, flux_src_vf, &
-                                             flux_gsrc_vf, &
                                              norm_dir, ix, iy)
 
             import :: scalar_field, int_bounds_info, sys_size, startx, starty
@@ -91,7 +89,7 @@ module m_riemann_solvers
 
             type(scalar_field), &
                 dimension(sys_size), &
-                intent(INOUT) :: flux_vf, flux_src_vf, flux_gsrc_vf
+                intent(INOUT) :: flux_vf, flux_src_vf
 
             integer, intent(IN) :: norm_dir
 
@@ -159,9 +157,6 @@ module m_riemann_solvers
     real(kind(0d0)), allocatable, dimension(:, :, :) :: flux_rsy_vf, flux_src_rsy_vf
 
     !> @}
-
-    real(kind(0d0)), allocatable, dimension(:, :, :) :: flux_gsrc_rsx_vf !<
-    real(kind(0d0)), allocatable, dimension(:, :, :) :: flux_gsrc_rsy_vf !<
 
     !! The cell-boundary values of the geometrical source flux that are computed
     !! through the chosen Riemann problem solver by using the left and right
@@ -261,8 +256,7 @@ module m_riemann_solvers
 !$acc    is1, is2, isx, isy)
 
 !$acc declare create(&
-!$acc    flux_rsx_vf, flux_src_rsx_vf, flux_rsy_vf, flux_src_rsy_vf, vel_src_rsx_vf, vel_src_rsy_vf, &
-!$acc    flux_gsrc_rsx_vf, flux_gsrc_rsy_vf)
+!$acc    flux_rsx_vf, flux_src_rsx_vf, flux_rsy_vf, flux_src_rsy_vf, vel_src_rsx_vf, vel_src_rsy_vf )
 
 
     real(kind(0d0)), allocatable, dimension(:, :) :: Res
@@ -279,7 +273,6 @@ contains
                                      qR_prim_vf, &
                                      q_prim_vf, &
                                      flux_vf, flux_src_vf, &
-                                     flux_gsrc_vf, &
                                      norm_dir, ix, iy)
 
         real(kind(0d0)), dimension(startx:, starty:, 1:), intent(INOUT) :: qL_prim_rsx_vf, qL_prim_rsy_vf, qR_prim_rsx_vf, qR_prim_rsy_vf
@@ -295,7 +288,7 @@ contains
         ! Intercell fluxes
         type(scalar_field), &
             dimension(sys_size), &
-            intent(INOUT) :: flux_vf, flux_src_vf, flux_gsrc_vf
+            intent(INOUT) :: flux_vf, flux_src_vf
 
         integer, intent(IN) :: norm_dir
         type(int_bounds_info), intent(IN) :: ix, iy
@@ -348,7 +341,6 @@ contains
         call s_initialize_riemann_solver( &
             q_prim_vf, &
             flux_vf, flux_src_vf, &
-            flux_gsrc_vf, &
             norm_dir, ix, iy)
         #:for NORM_DIR, XYZ in [(1, 'x'), (2, 'y')]
 
@@ -595,7 +587,6 @@ contains
         end if
 
         call s_finalize_riemann_solver(flux_vf, flux_src_vf, &
-                                       flux_gsrc_vf, &
                                        norm_dir, ix, iy)
 
     end subroutine s_hllc_riemann_solver
@@ -654,9 +645,6 @@ contains
         allocate (flux_rsx_vf(is1%beg:is1%end, &
                                    is2%beg:is2%end, &
                                     1:sys_size))
-        allocate (flux_gsrc_rsx_vf(is1%beg:is1%end, &
-                                        is2%beg:is2%end, &
-                                         1:sys_size))
         allocate (flux_src_rsx_vf(is1%beg:is1%end, &
                                        is2%beg:is2%end, &
                                         advxb:sys_size))
@@ -680,9 +668,6 @@ contains
         allocate (flux_rsy_vf(is1%beg:is1%end, &
                                    is2%beg:is2%end, &
                                     1:sys_size))
-        allocate (flux_gsrc_rsy_vf(is1%beg:is1%end, &
-                                        is2%beg:is2%end, &
-                                         1:sys_size))
         allocate (flux_src_rsy_vf(is1%beg:is1%end, &
                                        is2%beg:is2%end, &
                                         advxb:sys_size))
@@ -913,7 +898,6 @@ contains
         !!      cell-average primitive variables
         !!  @param flux_vf Intra-cell fluxes
         !!  @param flux_src_vf Intra-cell fluxes sources
-        !!  @param flux_gsrc_vf Intra-cell geometric fluxes sources
         !!  @param norm_dir Dir. splitting direction
         !!  @param ix Index bounds in the x-dir
         !!  @param iy Index bounds in the y-dir
@@ -921,14 +905,13 @@ contains
     subroutine s_initialize_riemann_solver( &
         q_prim_vf, &
         flux_vf, flux_src_vf, &
-        flux_gsrc_vf, &
         norm_dir, ix, iy)
 
         type(scalar_field), dimension(sys_size), intent(IN) :: q_prim_vf
 
         type(scalar_field), &
             dimension(sys_size), &
-            intent(INOUT) :: flux_vf, flux_src_vf, flux_gsrc_vf
+            intent(INOUT) :: flux_vf, flux_src_vf
 
         integer, intent(IN) :: norm_dir
 
@@ -1215,17 +1198,15 @@ contains
         !!      needed to finalize the selected Riemann problem solver
         !!  @param flux_vf       Intercell fluxes
         !!  @param flux_src_vf   Intercell source fluxes
-        !!  @param flux_gsrc_vf  Intercell geometric source fluxes
         !!  @param norm_dir Dimensional splitting coordinate direction
         !!  @param ix   Index bounds in  first coordinate direction
         !!  @param iy   Index bounds in second coordinate direction
     subroutine s_finalize_riemann_solver(flux_vf, flux_src_vf, & ! --------
-                                         flux_gsrc_vf, &
                                          norm_dir, ix, iy)
 
         type(scalar_field), &
             dimension(sys_size), &
-            intent(INOUT) :: flux_vf, flux_src_vf, flux_gsrc_vf
+            intent(INOUT) :: flux_vf, flux_src_vf
 
         integer, intent(IN) :: norm_dir
 
@@ -1310,7 +1291,6 @@ contains
         deallocate (vel_src_rsx_vf)
         deallocate (flux_rsx_vf)
         deallocate (flux_src_rsx_vf)
-        deallocate (flux_gsrc_rsx_vf)
 
         if (n == 0) return
 
@@ -1320,7 +1300,6 @@ contains
         deallocate (vel_src_rsy_vf)
         deallocate (flux_rsy_vf)
         deallocate (flux_src_rsy_vf)
-        deallocate (flux_gsrc_rsy_vf)
 
     end subroutine s_finalize_riemann_solvers_module ! ---------------------
 
