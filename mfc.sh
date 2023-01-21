@@ -237,7 +237,7 @@ elif [ "$1" == "cloc" ]; then
         exit 1
     fi
 
-    cloc .          --exclude-dir=build,tests,examples,.vscode,.github \
+    cloc .          --exclude-dir=build,examples,.vscode,.github \
          --fullpath --not-match-d=src/*/*/autogen
 
     exit $?

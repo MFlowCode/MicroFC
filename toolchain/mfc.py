@@ -2,10 +2,9 @@
 
 import signal, getpass, platform, itertools, dataclasses
 
-from mfc         import args, lock, build, bench, state
+from mfc         import args, lock, build, state
 from mfc.state   import ARG
 from mfc.run     import run
-from mfc.test    import test
 from mfc.common  import MFC_LOGO, MFCException, quit, format_list_to_string, does_command_exist
 from mfc.printer import cons
 
@@ -28,7 +27,7 @@ def __print_greeting():
     ] + [
         targets_line if ARG("command") != "test" else "",
         "",
-        "[yellow]$ ./mfc.sh \[build, run, test, clean] --help[/yellow]",
+        "[yellow]$ ./mfc.sh \[build, run, clean] --help[/yellow]",
     ]
 
     for a, b in itertools.zip_longest(MFC_LOGO_LINES, MFC_SIDEBAR_LINES):
@@ -48,8 +47,8 @@ def __checks():
 
 
 def __run():    
-    {"test":  test.test,   "run":   run.run,    "build": build.build,
-     "clean": build.clean, "bench": bench.bench
+    {"run":   run.run,    "build": build.build,
+     "clean": build.clean, 
     }[ARG("command")]()
 
 

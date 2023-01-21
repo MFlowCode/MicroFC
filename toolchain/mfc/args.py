@@ -2,7 +2,6 @@ import argparse
 
 from .build     import get_mfc_target_names, get_target_names, get_dependencies_names
 from .common    import format_list_to_string
-from .test.test import CASES as TEST_CASES
 
 
 def parse(config):
@@ -12,7 +11,7 @@ def parse(config):
     parser = argparse.ArgumentParser(
         prog="./mfc.sh",
         description=f"""\
-Welcome to the MFC master script. This tool automates and manages building, testing, \
+Welcome to the MFC master script. This tool automates and manages building, \
 running, and cleaning of MFC in various configurations on all supported platforms. \
 The README documents this tool and its various commands in more detail. To get \
 started, run ./mfc.sh build -h.""",
@@ -22,10 +21,8 @@ started, run ./mfc.sh build -h.""",
     parsers = parser.add_subparsers(dest="command")
 
     run   = parsers.add_parser(name="run",   help="Run a case with MFC.",            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    test  = parsers.add_parser(name="test",  help="Run MFC's test suite.",           formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     build = parsers.add_parser(name="build", help="Build MFC and its dependencies.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     clean = parsers.add_parser(name="clean", help="Clean build artifacts.",          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    bench = parsers.add_parser(name="bench", help="Benchmark MFC (for CI).",         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     def add_common_arguments(p, mask = None):
         if mask is None:
@@ -63,17 +60,6 @@ started, run ./mfc.sh build -h.""",
 
     binaries = [ b.bin for b in BINARIES ]
 
-    # === TEST ===
-    add_common_arguments(test, "t")
-    test.add_argument(      "--generate",    action="store_true", help="Generate golden files.")
-    test.add_argument("-l", "--list",        action="store_true", help="List all available tests.")
-    test.add_argument("-f", "--from",        default=TEST_CASES[0].get_uuid(), type=str, help="First test UUID to run.")
-    test.add_argument("-t", "--to",          default=TEST_CASES[-1].get_uuid(), type=str, help="Last test UUID to run.")
-    test.add_argument("-o", "--only",        nargs="+", type=str, default=[], metavar="L", help="Only run tests with UUIDs or hashes L.")
-    test.add_argument("-b", "--binary",      choices=binaries, type=str, default=None, help="(Serial) Override MPI execution binary")
-    test.add_argument("-r", "--relentless",  action="store_true", default=False, help="Run all tests, even if multiple fail.")
-    test.add_argument("--case-optimization", action="store_true", default=False, help="(GPU Optimization) Compile MFC targets with some case parameters hard-coded.")
-
     # === RUN ===
     engines = [ e.slug for e in ENGINES ]
 
@@ -94,9 +80,6 @@ started, run ./mfc.sh build -h.""",
     run.add_argument("--case-optimization",    action="store_true",                       default=False,      help="(GPU Optimization) Compile MFC targets with some case parameters hard-coded.")
     run.add_argument(      "--no-build",       action="store_true",                       default=False,      help="(Testing) Do not rebuild MFC.")
 
-    # === BENCH ===
-    add_common_arguments(bench, "t")
-
     args: dict = vars(parser.parse_args())
 
     # Add default arguments of other subparsers
@@ -107,8 +90,8 @@ started, run ./mfc.sh build -h.""",
                 if not key in args:
                     args[key] = val
 
-    for a, b in [("run",   run  ), ("test",  test ), ("build", build),
-                 ("clean", clean), ("bench", bench)]:
+    for a, b in [("run",   run  ), ("build", build),
+                 ("clean", clean)]:
         append_defaults_to_data(a, b)
 
     if args["command"] is None:

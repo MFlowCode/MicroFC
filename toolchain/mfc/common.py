@@ -6,7 +6,6 @@ from os.path import abspath, normpath, dirname, realpath
 
 
 MFC_ROOTDIR       = normpath(f"{dirname(realpath(__file__))}/../..")
-MFC_TESTDIR       = abspath(f"{MFC_ROOTDIR}/tests")
 MFC_SUBDIR        = abspath(f"{MFC_ROOTDIR}/build")
 MFC_DEV_FILEPATH  = abspath(f"{MFC_ROOTDIR}/toolchain/mfc.dev.yaml")
 MFC_USER_FILEPATH = abspath(f"{MFC_ROOTDIR}/defaults.yaml")
