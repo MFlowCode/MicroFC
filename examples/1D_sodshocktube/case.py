@@ -32,7 +32,6 @@ print(json.dumps({
     'num_patches'                  : 2,
     'num_fluids'                   : 1,
     'time_stepper'                 : 3,
-    'weno_vars'                    : 2,
     'weno_order'                   : 5,
     'weno_eps'                     : 1.E-16,
     'bc_x%beg'                     : -3,
