@@ -124,7 +124,6 @@ contains
         ! ==================================================================
 
         ! Reading the Grid Data File for the y-direction ===================
-
         if (n > 0) then
 
             ! Checking whether y_cb.dat exists
@@ -149,36 +148,6 @@ contains
             ! Computing the cell-center locations
             y_cc(0:n) = y_cb(-1:n - 1) + dy(0:n)/2d0
 
-            ! ==================================================================
-
-            ! Reading the Grid Data File for the z-direction ===================
-
-            if (p > 0) then
-
-                ! Checking whether z_cb.dat exists
-                file_loc = trim(t_step_dir)//'/z_cb.dat'
-                inquire (FILE=trim(file_loc), EXIST=file_check)
-
-                ! Reading z_cb.dat if it exists, exiting otherwise
-                if (file_check) then
-                    open (1, FILE=trim(file_loc), FORM='unformatted', &
-                          STATUS='old', ACTION='read')
-                    read (1) z_cb(-1:p)
-                    close (1)
-                else
-                    print '(A)', 'File z_cb.dat is missing in '// &
-                        trim(t_step_dir)//'. Exiting ...'
-                    call s_mpi_abort()
-                end if
-
-                ! Computing the cell-width distribution
-                dz(0:p) = z_cb(0:p) - z_cb(-1:p - 1)
-
-                ! Computing the cell-center locations
-                z_cc(0:p) = z_cb(-1:p - 1) + dz(0:p)/2d0
-
-            end if
-
         end if
 
         ! ==================================================================
@@ -197,7 +166,7 @@ contains
             if (file_check) then
                 open (1, FILE=trim(file_loc), FORM='unformatted', &
                       STATUS='old', ACTION='read')
-                read (1) q_cons_vf(i)%sf(0:m, 0:n, 0:p)
+                read (1) q_cons_vf(i)%sf(0:m, 0:n)
                 close (1)
             else
                 print '(A)', 'File q_cons_vf'//trim(file_num)// &
@@ -223,13 +192,13 @@ contains
 
 #ifdef MFC_MPI
 
-        real(kind(0d0)), allocatable, dimension(:) :: x_cb_glb, y_cb_glb, z_cb_glb
+        real(kind(0d0)), allocatable, dimension(:) :: x_cb_glb, y_cb_glb
 
         integer :: ifile, ierr, data_size
         integer, dimension(MPI_STATUS_SIZE) :: status
         real(kind(0d0)) :: start, finish
         integer(KIND=MPI_OFFSET_KIND) :: disp
-        integer(KIND=MPI_OFFSET_KIND) :: m_MOK, n_MOK, p_MOK
+        integer(KIND=MPI_OFFSET_KIND) :: m_MOK, n_MOK
         integer(KIND=MPI_OFFSET_KIND) :: WP_MOK, var_MOK, str_MOK
         integer(KIND=MPI_OFFSET_KIND) :: NVARS_MOK
         integer(KIND=MPI_OFFSET_KIND) :: MOK
@@ -241,7 +210,6 @@ contains
 
         allocate (x_cb_glb(-1:m_glb))
         allocate (y_cb_glb(-1:n_glb))
-        allocate (z_cb_glb(-1:p_glb))
 
         ! Read in cell boundary locations in x-direction
         file_loc = trim(case_dir)//'/restart_data'//trim(mpiiofs)//'x_cb.dat'
@@ -285,29 +253,6 @@ contains
             dy(0:n) = y_cb(0:n) - y_cb(-1:n - 1)
             ! Computing the cell center location
             y_cc(0:n) = y_cb(-1:n - 1) + dy(0:n)/2d0
-
-            if (p > 0) then
-                ! Read in cell boundary locations in z-direction
-                file_loc = trim(case_dir)//'/restart_data'//trim(mpiiofs)//'z_cb.dat'
-                inquire (FILE=trim(file_loc), EXIST=file_exist)
-
-                if (file_exist) then
-                    data_size = p_glb + 2
-                    call MPI_FILE_OPEN(MPI_COMM_WORLD, file_loc, MPI_MODE_RDONLY, mpi_info_int, ifile, ierr)
-                    call MPI_FILE_READ(ifile, z_cb_glb, data_size, MPI_DOUBLE_PRECISION, status, ierr)
-                    call MPI_FILE_CLOSE(ifile, ierr)
-                else
-                    print '(A)', 'File ', trim(file_loc), ' is missing. Exiting...'
-                    call s_mpi_abort()
-                end if
-
-                ! Assigning local cell boundary locations
-                z_cb(-1:p) = z_cb_glb((start_idx(3) - 1):(start_idx(3) + p))
-                ! Computing the cell width distribution
-                dz(0:p) = z_cb(0:p) - z_cb(-1:p - 1)
-                ! Computing the cell center location
-                z_cc(0:p) = z_cb(-1:p - 1) + dz(0:p)/2d0
-            end if
         end if
 
         ! Open the file to read conservative variables
@@ -322,43 +267,28 @@ contains
             call s_initialize_mpi_data(q_cons_vf)
 
             ! Size of local arrays
-            data_size = (m + 1)*(n + 1)*(p + 1)
+            data_size = (m + 1)*(n + 1)
 
             ! Resize some integers so MPI can read even the biggest file
             m_MOK = int(m_glb + 1, MPI_OFFSET_KIND)
             n_MOK = int(n_glb + 1, MPI_OFFSET_KIND)
-            p_MOK = int(p_glb + 1, MPI_OFFSET_KIND)
             WP_MOK = int(8d0, MPI_OFFSET_KIND)
             MOK = int(1d0, MPI_OFFSET_KIND)
             str_MOK = int(name_len, MPI_OFFSET_KIND)
             NVARS_MOK = int(sys_size, MPI_OFFSET_KIND)
 
             ! Read the data for each variable
-            if (bubbles .or. hypoelasticity) then
-                do i = 1, sys_size
-                    var_MOK = int(i, MPI_OFFSET_KIND)
+            do i = 1, adv_idx%end
+                var_MOK = int(i, MPI_OFFSET_KIND)
 
-                    ! Initial displacement to skip at beginning of file
-                    disp = m_MOK*max(MOK, n_MOK)*max(MOK, p_MOK)*WP_MOK*(var_MOK - 1)
+                ! Initial displacement to skip at beginning of file
+                disp = m_MOK*max(MOK, n_MOK)*WP_MOK*(var_MOK - 1)
 
-                    call MPI_FILE_SET_VIEW(ifile, disp, MPI_DOUBLE_PRECISION, MPI_IO_DATA%view(i), &
-                                           'native', mpi_info_int, ierr)
-                    call MPI_FILE_READ_ALL(ifile, MPI_IO_DATA%var(i)%sf, data_size, &
-                                           MPI_DOUBLE_PRECISION, status, ierr)
-                end do
-            else
-                do i = 1, adv_idx%end
-                    var_MOK = int(i, MPI_OFFSET_KIND)
-
-                    ! Initial displacement to skip at beginning of file
-                    disp = m_MOK*max(MOK, n_MOK)*max(MOK, p_MOK)*WP_MOK*(var_MOK - 1)
-
-                    call MPI_FILE_SET_VIEW(ifile, disp, MPI_DOUBLE_PRECISION, MPI_IO_DATA%view(i), &
-                                           'native', mpi_info_int, ierr)
-                    call MPI_FILE_READ_ALL(ifile, MPI_IO_DATA%var(i)%sf, data_size, &
-                                           MPI_DOUBLE_PRECISION, status, ierr)
-                end do
-            end if
+                call MPI_FILE_SET_VIEW(ifile, disp, MPI_DOUBLE_PRECISION, MPI_IO_DATA%view(i), &
+                                       'native', mpi_info_int, ierr)
+                call MPI_FILE_READ_ALL(ifile, MPI_IO_DATA%var(i)%sf, data_size, &
+                                       MPI_DOUBLE_PRECISION, status, ierr)
+            end do
 
             call s_mpi_barrier()
 
@@ -368,7 +298,7 @@ contains
             call s_mpi_abort()
         end if
 
-        deallocate (x_cb_glb, y_cb_glb, z_cb_glb)
+        deallocate (x_cb_glb, y_cb_glb)
 
 #endif
 
@@ -537,90 +467,9 @@ contains
                 end do
 
             end if
-
             ! END: Populating Buffer Regions in the y-direction ================
-
-            ! Populating Buffer Regions in the z-direction =====================
-
-            if (p > 0) then
-
-                ! Ghost-cell extrapolation BC at the beginning
-                if (bc_z%beg <= -3) then
-
-                    do i = 1, buff_size
-                        dz(-i) = dz(0)
-                    end do
-
-                    ! Symmetry BC at the beginning
-                elseif (bc_z%beg == -2) then
-
-                    do i = 1, buff_size
-                        dz(-i) = dz(i - 1)
-                    end do
-
-                    ! Periodic BC at the beginning
-                elseif (bc_z%beg == -1) then
-
-                    do i = 1, buff_size
-                        dz(-i) = dz((p + 1) - i)
-                    end do
-
-                    ! Processor BC at the beginning
-                else
-
-                    call s_mpi_sendrecv_grid_vars_buffer_regions('beg', 'z')
-
-                    do i = 1, offset_z%beg
-                        z_cb(-1 - i) = z_cb(-i) - dz(-i)
-                    end do
-
-                    do i = 1, buff_size
-                        z_cc(-i) = z_cc(1 - i) - (dz(1 - i) + dz(-i))/2d0
-                    end do
-
-                end if
-
-                ! Ghost-cell extrapolation BC at the end
-                if (bc_z%end <= -3) then
-
-                    do i = 1, buff_size
-                        dz(p + i) = dz(p)
-                    end do
-
-                    ! Symmetry BC at the end
-                elseif (bc_z%end == -2) then
-
-                    do i = 1, buff_size
-                        dz(p + i) = dz((p + 1) - i)
-                    end do
-
-                    ! Periodic BC at the end
-                elseif (bc_z%end == -1) then
-
-                    do i = 1, buff_size
-                        dz(p + i) = dz(i - 1)
-                    end do
-
-                    ! Processor BC at the end
-                else
-
-                    call s_mpi_sendrecv_grid_vars_buffer_regions('end', 'z')
-
-                    do i = 1, offset_z%end
-                        z_cb(p + i) = z_cb(p + (i - 1)) + dz(p + i)
-                    end do
-
-                    do i = 1, buff_size
-                        z_cc(p + i) = z_cc(p + (i - 1)) + (dz(p + (i - 1)) + dz(p + i))/2d0
-                    end do
-
-                end if
-
-            end if
-
         end if
 
-        ! END: Populating Buffer Regions in the z-direction ================
 
     end subroutine s_populate_grid_variables_buffer_regions ! --------------
 
@@ -638,7 +487,7 @@ contains
 
             do j = 1, buff_size
                 do i = 1, sys_size
-                    q_cons_vf(i)%sf(-j, 0:n, 0:p) = q_cons_vf(i)%sf(0, 0:n, 0:p)
+                    q_cons_vf(i)%sf(-j, 0:n) = q_cons_vf(i)%sf(0, 0:n)
                 end do
             end do
 
@@ -649,19 +498,19 @@ contains
 
                 ! Density or partial densities
                 do i = 1, cont_idx%end
-                    q_cons_vf(i)%sf(-j, 0:n, 0:p) = &
-                        q_cons_vf(i)%sf(j - 1, 0:n, 0:p)
+                    q_cons_vf(i)%sf(-j, 0:n) = &
+                        q_cons_vf(i)%sf(j - 1, 0:n)
                 end do
 
                 ! x-component of momentum
-                q_cons_vf(mom_idx%beg)%sf(-j, 0:n, 0:p) = &
-                    -q_cons_vf(mom_idx%beg)%sf(j - 1, 0:n, 0:p)
+                q_cons_vf(mom_idx%beg)%sf(-j, 0:n) = &
+                    -q_cons_vf(mom_idx%beg)%sf(j - 1, 0:n)
 
                 ! Remaining momentum component(s), if any, as well as the
                 ! energy and the variable(s) from advection equation(s)
                 do i = mom_idx%beg + 1, sys_size
-                    q_cons_vf(i)%sf(-j, 0:n, 0:p) = &
-                        q_cons_vf(i)%sf(j - 1, 0:n, 0:p)
+                    q_cons_vf(i)%sf(-j, 0:n) = &
+                        q_cons_vf(i)%sf(j - 1, 0:n)
                 end do
 
             end do
@@ -671,8 +520,8 @@ contains
 
             do j = 1, buff_size
                 do i = 1, sys_size
-                    q_cons_vf(i)%sf(-j, 0:n, 0:p) = &
-                        q_cons_vf(i)%sf((m + 1) - j, 0:n, 0:p)
+                    q_cons_vf(i)%sf(-j, 0:n) = &
+                        q_cons_vf(i)%sf((m + 1) - j, 0:n)
                 end do
             end do
 
@@ -689,8 +538,8 @@ contains
 
             do j = 1, buff_size
                 do i = 1, sys_size
-                    q_cons_vf(i)%sf(m + j, 0:n, 0:p) = &
-                        q_cons_vf(i)%sf(m, 0:n, 0:p)
+                    q_cons_vf(i)%sf(m + j, 0:n) = &
+                        q_cons_vf(i)%sf(m, 0:n)
                 end do
             end do
 
@@ -701,19 +550,19 @@ contains
 
                 ! Density or partial densities
                 do i = 1, cont_idx%end
-                    q_cons_vf(i)%sf(m + j, 0:n, 0:p) = &
-                        q_cons_vf(i)%sf((m + 1) - j, 0:n, 0:p)
+                    q_cons_vf(i)%sf(m + j, 0:n) = &
+                        q_cons_vf(i)%sf((m + 1) - j, 0:n)
                 end do
 
                 ! x-component of momentum
-                q_cons_vf(mom_idx%beg)%sf(m + j, 0:n, 0:p) = &
-                    -q_cons_vf(mom_idx%beg)%sf((m + 1) - j, 0:n, 0:p)
+                q_cons_vf(mom_idx%beg)%sf(m + j, 0:n) = &
+                    -q_cons_vf(mom_idx%beg)%sf((m + 1) - j, 0:n)
 
                 ! Remaining momentum component(s), if any, as well as the
                 ! energy and the variable(s) from advection equation(s)
                 do i = mom_idx%beg + 1, sys_size
-                    q_cons_vf(i)%sf(m + j, 0:n, 0:p) = &
-                        q_cons_vf(i)%sf((m + 1) - j, 0:n, 0:p)
+                    q_cons_vf(i)%sf(m + j, 0:n) = &
+                        q_cons_vf(i)%sf((m + 1) - j, 0:n)
                 end do
 
             end do
@@ -723,8 +572,8 @@ contains
 
             do j = 1, buff_size
                 do i = 1, sys_size
-                    q_cons_vf(i)%sf(m + j, 0:n, 0:p) = &
-                        q_cons_vf(i)%sf(j - 1, 0:n, 0:p)
+                    q_cons_vf(i)%sf(m + j, 0:n) = &
+                        q_cons_vf(i)%sf(j - 1, 0:n)
                 end do
             end do
 
@@ -747,71 +596,30 @@ contains
 
                 do j = 1, buff_size
                     do i = 1, sys_size
-                        q_cons_vf(i)%sf(:, -j, 0:p) = q_cons_vf(i)%sf(:, 0, 0:p)
+                        q_cons_vf(i)%sf(:, -j) = q_cons_vf(i)%sf(:, 0)
                     end do
                 end do
 
-                ! Axis BC at the beginning
-            elseif (bc_y%beg == -13) then
-
-                do j = 1, buff_size
-                    do k = 0, p
-                        if (z_cc(k) < pi) then
-                            do i = 1, mom_idx%beg
-                                q_cons_vf(i)%sf(:, -j, k) = &
-                                    q_cons_vf(i)%sf(:, j - 1, k + ((p + 1)/2))
-                            end do
-
-                            q_cons_vf(mom_idx%beg + 1)%sf(:, -j, k) = &
-                                -q_cons_vf(mom_idx%beg + 1)%sf(:, j - 1, k + ((p + 1)/2))
-
-                            q_cons_vf(mom_idx%end)%sf(:, -j, k) = &
-                                -q_cons_vf(mom_idx%end)%sf(:, j - 1, k + ((p + 1)/2))
-
-                            do i = E_idx, sys_size
-                                q_cons_vf(i)%sf(:, -j, k) = &
-                                    q_cons_vf(i)%sf(:, j - 1, k + ((p + 1)/2))
-                            end do
-                        else
-                            do i = 1, mom_idx%beg
-                                q_cons_vf(i)%sf(:, -j, k) = &
-                                    q_cons_vf(i)%sf(:, j - 1, k - ((p + 1)/2))
-                            end do
-
-                            q_cons_vf(mom_idx%beg + 1)%sf(:, -j, k) = &
-                                -q_cons_vf(mom_idx%beg + 1)%sf(:, j - 1, k - ((p + 1)/2))
-
-                            q_cons_vf(mom_idx%end)%sf(:, -j, k) = &
-                                -q_cons_vf(mom_idx%end)%sf(:, j - 1, k - ((p + 1)/2))
-
-                            do i = E_idx, sys_size
-                                q_cons_vf(i)%sf(:, -j, k) = &
-                                    q_cons_vf(i)%sf(:, j - 1, k - ((p + 1)/2))
-                            end do
-                        end if
-                    end do
-                end do
-
-                ! Symmetry BC at the beginning
+            ! Symmetry BC at the beginning
             elseif (bc_y%beg == -2) then
 
                 do j = 1, buff_size
 
                     ! Density or partial densities and x-momentum component
                     do i = 1, mom_idx%beg
-                        q_cons_vf(i)%sf(:, -j, 0:p) = &
-                            q_cons_vf(i)%sf(:, j - 1, 0:p)
+                        q_cons_vf(i)%sf(:, -j) = &
+                            q_cons_vf(i)%sf(:, j - 1)
                     end do
 
                     ! y-component of momentum
-                    q_cons_vf(mom_idx%beg + 1)%sf(:, -j, 0:p) = &
-                        -q_cons_vf(mom_idx%beg + 1)%sf(:, j - 1, 0:p)
+                    q_cons_vf(mom_idx%beg + 1)%sf(:, -j) = &
+                        -q_cons_vf(mom_idx%beg + 1)%sf(:, j - 1)
 
                     ! Remaining z-momentum component, if any, as well as the
                     ! energy and variable(s) from advection equation(s)
                     do i = mom_idx%beg + 2, sys_size
-                        q_cons_vf(i)%sf(:, -j, 0:p) = &
-                            q_cons_vf(i)%sf(:, j - 1, 0:p)
+                        q_cons_vf(i)%sf(:, -j) = &
+                            q_cons_vf(i)%sf(:, j - 1)
                     end do
 
                 end do
@@ -821,8 +629,8 @@ contains
 
                 do j = 1, buff_size
                     do i = 1, sys_size
-                        q_cons_vf(i)%sf(:, -j, 0:p) = &
-                            q_cons_vf(i)%sf(:, (n + 1) - j, 0:p)
+                        q_cons_vf(i)%sf(:, -j) = &
+                            q_cons_vf(i)%sf(:, (n + 1) - j)
                     end do
                 end do
 
@@ -839,8 +647,8 @@ contains
 
                 do j = 1, buff_size
                     do i = 1, sys_size
-                        q_cons_vf(i)%sf(:, n + j, 0:p) = &
-                            q_cons_vf(i)%sf(:, n, 0:p)
+                        q_cons_vf(i)%sf(:, n + j) = &
+                            q_cons_vf(i)%sf(:, n)
                     end do
                 end do
 
@@ -851,19 +659,19 @@ contains
 
                     ! Density or partial densities and x-momentum component
                     do i = 1, mom_idx%beg
-                        q_cons_vf(i)%sf(:, n + j, 0:p) = &
-                            q_cons_vf(i)%sf(:, (n + 1) - j, 0:p)
+                        q_cons_vf(i)%sf(:, n + j) = &
+                            q_cons_vf(i)%sf(:, (n + 1) - j)
                     end do
 
                     ! y-component of momentum
-                    q_cons_vf(mom_idx%beg + 1)%sf(:, n + j, 0:p) = &
-                        -q_cons_vf(mom_idx%beg + 1)%sf(:, (n + 1) - j, 0:p)
+                    q_cons_vf(mom_idx%beg + 1)%sf(:, n + j) = &
+                        -q_cons_vf(mom_idx%beg + 1)%sf(:, (n + 1) - j)
 
                     ! Remaining z-momentum component, if any, as well as the
                     ! energy and variable(s) from advection equation(s)
                     do i = mom_idx%beg + 2, sys_size
-                        q_cons_vf(i)%sf(:, n + j, 0:p) = &
-                            q_cons_vf(i)%sf(:, (n + 1) - j, 0:p)
+                        q_cons_vf(i)%sf(:, n + j) = &
+                            q_cons_vf(i)%sf(:, (n + 1) - j)
                     end do
 
                 end do
@@ -873,8 +681,8 @@ contains
 
                 do j = 1, buff_size
                     do i = 1, sys_size
-                        q_cons_vf(i)%sf(:, n + j, 0:p) = &
-                            q_cons_vf(i)%sf(:, j - 1, 0:p)
+                        q_cons_vf(i)%sf(:, n + j) = &
+                            q_cons_vf(i)%sf(:, j - 1)
                     end do
                 end do
 
@@ -887,116 +695,6 @@ contains
             end if
 
             ! END: Populating Buffer Regions in the y-direction ================
-
-            ! Populating Buffer Regions in the z-direction =====================
-
-            if (p > 0) then
-
-                ! Ghost-cell extrapolation BC at the beginning
-                if (bc_z%beg <= -3) then
-
-                    do j = 1, buff_size
-                        do i = 1, sys_size
-                            q_cons_vf(i)%sf(:, :, -j) = q_cons_vf(i)%sf(:, :, 0)
-                        end do
-                    end do
-
-                    ! Symmetry BC at the beginning
-                elseif (bc_z%beg == -2) then
-
-                    do j = 1, buff_size
-
-                        ! Density or the partial densities and the momentum
-                        ! components in x- and y-directions
-                        do i = 1, mom_idx%beg + 1
-                            q_cons_vf(i)%sf(:, :, -j) = &
-                                q_cons_vf(i)%sf(:, :, j - 1)
-                        end do
-
-                        ! z-component of momentum
-                        q_cons_vf(mom_idx%end)%sf(:, :, -j) = &
-                            -q_cons_vf(mom_idx%end)%sf(:, :, j - 1)
-
-                        ! Energy and advection equation(s) variable(s)
-                        do i = E_idx, sys_size
-                            q_cons_vf(i)%sf(:, :, -j) = &
-                                q_cons_vf(i)%sf(:, :, j - 1)
-                        end do
-
-                    end do
-
-                    ! Periodic BC at the beginning
-                elseif (bc_z%beg == -1) then
-
-                    do j = 1, buff_size
-                        do i = 1, sys_size
-                            q_cons_vf(i)%sf(:, :, -j) = &
-                                q_cons_vf(i)%sf(:, :, (p + 1) - j)
-                        end do
-                    end do
-
-                    ! Processor BC at the beginning
-                else
-
-                    call s_mpi_sendrecv_cons_vars_buffer_regions(q_cons_vf, &
-                                                                 'beg', 'z')
-
-                end if
-
-                ! Ghost-cell extrapolation BC at the end
-                if (bc_z%end <= -3) then
-
-                    do j = 1, buff_size
-                        do i = 1, sys_size
-                            q_cons_vf(i)%sf(:, :, p + j) = &
-                                q_cons_vf(i)%sf(:, :, p)
-                        end do
-                    end do
-
-                    ! Symmetry BC at the end
-                elseif (bc_z%end == -2) then
-
-                    do j = 1, buff_size
-
-                        ! Density or the partial densities and the momentum
-                        ! components in x- and y-directions
-                        do i = 1, mom_idx%beg + 1
-                            q_cons_vf(i)%sf(:, :, p + j) = &
-                                q_cons_vf(i)%sf(:, :, (p + 1) - j)
-                        end do
-
-                        ! z-component of momentum
-                        q_cons_vf(mom_idx%end)%sf(:, :, p + j) = &
-                            -q_cons_vf(mom_idx%end)%sf(:, :, (p + 1) - j)
-
-                        ! Energy and advection equation(s) variable(s)
-                        do i = E_idx, sys_size
-                            q_cons_vf(i)%sf(:, :, p + j) = &
-                                q_cons_vf(i)%sf(:, :, (p + 1) - j)
-                        end do
-
-                    end do
-
-                    ! Perodic BC at the end
-                elseif (bc_z%end == -1) then
-
-                    do j = 1, buff_size
-                        do i = 1, sys_size
-                            q_cons_vf(i)%sf(:, :, p + j) = &
-                                q_cons_vf(i)%sf(:, :, j - 1)
-                        end do
-                    end do
-
-                    ! Processor BC at the end
-                else
-
-                    call s_mpi_sendrecv_cons_vars_buffer_regions(q_cons_vf, &
-                                                                 'end', 'z')
-
-                end if
-
-            end if
-
         end if
 
         ! END: Populating Buffer Regions in the z-direction ================
@@ -1022,42 +720,21 @@ contains
         ! Simulation is at least 2D
         if (n > 0) then
 
-            ! Simulation is 3D
-            if (p > 0) then
-
-                do i = 1, sys_size
-                    allocate (q_cons_vf(i)%sf(-buff_size:m + buff_size, &
-                                              -buff_size:n + buff_size, &
-                                              -buff_size:p + buff_size))
-                    allocate (q_prim_vf(i)%sf(-buff_size:m + buff_size, &
-                                              -buff_size:n + buff_size, &
-                                              -buff_size:p + buff_size))
-                end do
-
-                ! Simulation is 2D
-            else
-
-                do i = 1, sys_size
-                    allocate (q_cons_vf(i)%sf(-buff_size:m + buff_size, &
-                                              -buff_size:n + buff_size, &
-                                              0:0))
-                    allocate (q_prim_vf(i)%sf(-buff_size:m + buff_size, &
-                                              -buff_size:n + buff_size, &
-                                              0:0))
-                end do
-
-            end if
+            do i = 1, sys_size
+                allocate (q_cons_vf(i)%sf(-buff_size:m + buff_size, &
+                                          -buff_size:n + buff_size ))
+                allocate (q_prim_vf(i)%sf(-buff_size:m + buff_size, &
+                                          -buff_size:n + buff_size ))
+            end do
 
             ! Simulation is 1D
         else
 
             do i = 1, sys_size
                 allocate (q_cons_vf(i)%sf(-buff_size:m + buff_size, &
-                                          0:0, &
-                                          0:0))
+                                          0:0 ))
                 allocate (q_prim_vf(i)%sf(-buff_size:m + buff_size, &
-                                          0:0, &
-                                          0:0))
+                                          0:0 ))
             end do
 
         end if
