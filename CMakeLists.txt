@@ -80,7 +80,6 @@ if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
         add_compile_options(
             -fcheck=all     -fbacktrace
             -fimplicit-none -ffpe-trap=invalid,zero,overflow,underflow
-            -Wall
         )
     endif()
 
