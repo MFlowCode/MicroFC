@@ -9,7 +9,7 @@
 !!              addition, this module is also in charge of outputting a run-time
 !!              information file which summarizes the time-dependent behavior !of
 !!              the stability criteria. The latter include the inviscid Courant–
-!!              Friedrichs–Lewy (ICFL), viscous CFL (VCFL), capillary CFL (CCFL)
+!!              Friedrichs–Lewy (ICFL), viscous CFL (VCFL),
 !!              and cell Reynolds (Rc) numbers.
 module m_data_output
 
@@ -59,23 +59,20 @@ module m_data_output
 
     real(kind(0d0)), allocatable, dimension(:, :) :: icfl_sf  !< ICFL stability criterion
     real(kind(0d0)), allocatable, dimension(:, :) :: vcfl_sf  !< VCFL stability criterion
-    real(kind(0d0)), allocatable, dimension(:, :) :: ccfl_sf  !< CCFL stability criterion
     real(kind(0d0)), allocatable, dimension(:, :) :: Rc_sf  !< Rc stability criterion
 
-!$acc declare create(icfl_sf, vcfl_sf, ccfl_sf, Rc_sf)
+!$acc declare create(icfl_sf, vcfl_sf, Rc_sf)
 
     real(kind(0d0)) :: icfl_max_loc, icfl_max_glb !< ICFL stability extrema on local and global grids
     real(kind(0d0)) :: vcfl_max_loc, vcfl_max_glb !< VCFL stability extrema on local and global grids
-    real(kind(0d0)) :: ccfl_max_loc, ccfl_max_glb !< CCFL stability extrema on local and global grids
     real(kind(0d0)) :: Rc_min_loc, Rc_min_glb !< Rc   stability extrema on local and global grids
 
-!$acc declare create(icfl_max_loc, icfl_max_glb, vcfl_max_loc, vcfl_max_glb, ccfl_max_loc, ccfl_max_glb, Rc_min_loc, Rc_min_glb)
+!$acc declare create(icfl_max_loc, icfl_max_glb, vcfl_max_loc, vcfl_max_glb, Rc_min_loc, Rc_min_glb)
 
-    !> @name ICFL, VCFL, CCFL and Rc stability criteria extrema over all the time-steps
+    !> @name ICFL, VCFL, and Rc stability criteria extrema over all the time-steps
     !> @{
     real(kind(0d0)) :: icfl_max !< ICFL criterion maximum
     real(kind(0d0)) :: vcfl_max !< VCFL criterion maximum
-    real(kind(0d0)) :: ccfl_max !< CCFL criterion maximum
     real(kind(0d0)) :: Rc_min !< Rc criterion maximum
     !> @}
 
@@ -121,8 +118,6 @@ contains
                 'each time-step of the simulation. This'
             write (1, '(13X,A)') 'data is composed of the inviscid '// &
                 'Courant–Friedrichs–Lewy (ICFL)'
-            write (1, '(13X,A)') 'number, the viscous CFL (VCFL) number, '// &
-                'the capillary CFL (CCFL)'
             write (1, '(13X,A)') 'number and the cell Reynolds (Rc) '// &
                 'number. Please note that only'
             write (1, '(13X,A)') 'those stability conditions pertinent '// &
@@ -195,16 +190,7 @@ contains
         real(kind(0d0)) :: c          !< Cell-avg. sound speed
         real(kind(0d0)), dimension(2) :: Re         !< Cell-avg. Reynolds numbers
 
-        ! ICFL, VCFL, CCFL and Rc stability criteria extrema for the current
-        ! time-step and located on both the local (loc) and the global (glb)
-        ! computational domains
-
-        real(kind(0d0)) :: blkmod1, blkmod2 !<
-            !! Fluid bulk modulus for Woods mixture sound speed
-
         integer :: i, j, k !< Generic loop iterators
-
-        integer :: Nfq
 
         ! Computing Stability Criteria at Current Time-step ================
 !$acc parallel loop collapse(3) gang vector default(present) private(alpha_rho, vel, alpha, Re)
@@ -216,7 +202,7 @@ contains
                         alpha(i) = q_prim_vf(E_idx + i)%sf(j, k)
                     end do
 
-                    call s_convert_species_to_mixture_variables_acc(rho, gamma, pi_inf, alpha, alpha_rho, Re, j, k)
+                    call s_convert_species_to_mixture_variables_acc(rho, gamma, pi_inf, alpha, alpha_rho, Re)
 
                     do i = 1, num_dims
                         vel(i) = q_prim_vf(contxe + i)%sf(j, k)
@@ -226,7 +212,6 @@ contains
 
                     ! Compute mixture sound speed
                     c = (((gamma + 1d0)*pres + pi_inf)/(gamma*rho))
-
                     c = sqrt(c)
 
                     if (n > 0) then
@@ -235,7 +220,6 @@ contains
                                                   dy(k)/(abs(vel(2)) + c))
 
                         if (any(Re_size > 0)) then
-
                             vcfl_sf(j, k) = maxval(dt/Re)/min(dx(j), dy(k))**2d0
 
                             Rc_sf(j, k) = min(dx(j)*(abs(vel(1)) + c), &
@@ -243,7 +227,6 @@ contains
                                              /maxval(1d0/Re)
 
                         end if
-
                     else
                         !1D
                         icfl_sf(j, k) = (dt/dx(j))*(abs(vel(1)) + c)
@@ -255,9 +238,7 @@ contains
                             Rc_sf(j, k) = dx(j)*(abs(vel(1)) + c)/maxval(1d0/Re)
 
                         end if
-
                     end if
-
                 end do
             end do
         ! END: Computing Stability Criteria at Current Time-step ===========
@@ -281,11 +262,9 @@ contains
         if (num_procs > 1) then
             call s_mpi_reduce_stability_criteria_extrema(icfl_max_loc, &
                                                          vcfl_max_loc, &
-                                                         ccfl_max_loc, &
                                                          Rc_min_loc, &
                                                          icfl_max_glb, &
                                                          vcfl_max_glb, &
-                                                         ccfl_max_glb, &
                                                          Rc_min_glb)
         else
             icfl_max_glb = icfl_max_loc
@@ -349,7 +328,7 @@ contains
 
         character(LEN=15) :: FMT
 
-        integer :: i, j, k, ii !< Generic loop iterators
+        integer :: i, j, k
 
         real(kind(0d0)) :: gamma, lit_gamma, pi_inf     !< Temporary EOS params
         real(kind(0d0)) :: rho                          !< Temporary density
@@ -577,7 +556,6 @@ contains
         real(kind(0d0)) :: rho
         real(kind(0d0)), dimension(num_dims) :: vel
         real(kind(0d0)) :: pres
-        real(kind(0d0)), dimension(num_fluids) :: alpha
         real(kind(0d0)) :: gamma
         real(kind(0d0)) :: pi_inf
         real(kind(0d0)) :: c
@@ -590,18 +568,11 @@ contains
         real(kind(0d0)) :: tmp !<
             !! Temporary variable to store quantity for mpi_allreduce
 
-        real(kind(0d0)) :: blkmod1, blkmod2 !<
-            !! Fluid bulk modulus for Woods mixture sound speed
-
         ! Non-dimensional time calculation
-        if (time_stepper == 23) then
-            nondim_time = mytime
+        if (t_step_old /= dflt_int) then
+            nondim_time = real(t_step + t_step_old, kind(0d0))*dt
         else
-            if (t_step_old /= dflt_int) then
-                nondim_time = real(t_step + t_step_old, kind(0d0))*dt
-            else
-                nondim_time = real(t_step, kind(0d0))*dt !*1.d-5/10.0761131451d0
-            end if
+            nondim_time = real(t_step, kind(0d0))*dt
         end if
 
         do i = 1, num_probes
@@ -750,12 +721,7 @@ contains
         !!      other procedures that are necessary to setup the module.
     subroutine s_initialize_data_output_module() ! -------------------------
 
-        type(int_bounds_info) :: ix, iy, iz
-
-        integer :: i !< Generic loop iterator
-
-
-        ! Allocating/initializing ICFL, VCFL, CCFL and Rc stability criteria
+        ! Allocating/initializing ICFL, VCFL, and Rc stability criteria
         @:ALLOCATE(icfl_sf(0:m, 0:n))
         icfl_max = 0d0
         
@@ -785,14 +751,11 @@ contains
     !> Module deallocation and/or disassociation procedures
     subroutine s_finalize_data_output_module() ! ---------------------------
 
-        integer :: i !< Generic loop iterator
-
-        ! Deallocating the ICFL, VCFL, CCFL, and Rc stability criteria
+        ! Deallocating the ICFL, VCFL, and Rc stability criteria
         @:DEALLOCATE(icfl_sf)
         if (any(Re_size > 0)) then
             @:DEALLOCATE(vcfl_sf, Rc_sf)
         end if
-
 
         ! Disassociating the pointer to the procedure that was utilized to
         ! to convert mixture or species variables to the mixture variables

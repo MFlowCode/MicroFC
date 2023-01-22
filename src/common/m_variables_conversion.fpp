@@ -76,7 +76,7 @@ module m_variables_conversion
 #endif
 
     real(kind(0d0)), allocatable, dimension(:, :) :: Res
-    !$acc declare create(bubrs, Gs, Res)
+    !$acc declare create(Res)
 
     integer :: is1b, is2b, is1e, is2e
     !$acc declare create(is1b, is2b, is1e, is2e)
@@ -186,26 +186,19 @@ contains
 
     subroutine s_convert_species_to_mixture_variables_acc(rho_K, &
                                                           gamma_K, pi_inf_K, &
-                                                          alpha_K, alpha_rho_K, Re_K, k, l )
+                                                          alpha_K, alpha_rho_K, Re_K )
 !$acc routine seq
 
         real(kind(0d0)), intent(OUT) :: rho_K, gamma_K, pi_inf_K
-
-        real(kind(0d0)), dimension(num_fluids), intent(INOUT) :: alpha_rho_K, alpha_K !<
+        real(kind(0d0)), dimension(num_fluids), intent(INOUT) :: alpha_rho_K, alpha_K 
         real(kind(0d0)), dimension(2), intent(OUT) :: Re_K
 
-        integer, intent(IN) :: k, l
-
-        integer :: i, j !< Generic loop iterators
-        real(kind(0d0)) :: alpha_K_sum
+        integer :: i, j
 
 #ifdef MFC_SIMULATION
         rho_K = 0d0
         gamma_K = 0d0
         pi_inf_K = 0d0
-
-        alpha_K_sum = 0d0
-
 
         do i = 1, num_fluids
             rho_K = rho_K + alpha_rho_K(i)
@@ -317,23 +310,11 @@ contains
         !!      the conservative variables and the primitive variables.
         !! @param qK_cons_vf Conservative variables
         !! @param qK_prim_vf Primitive variables
-        !! @param gm_alphaK_vf Gradient magnitude of the volume fraction
-        !! @param ix Index bounds in first coordinate direction
-        !! @param iy Index bounds in second coordinate direction
-        !! @param iz Index bounds in third coordinate direction
     subroutine s_convert_conservative_to_primitive_variables(qK_cons_vf, &
-                                                             qK_prim_vf, &
-                                                             gm_alphaK_vf, &
-                                                             ix, iy)
+                                                             qK_prim_vf )
 
         type(scalar_field), dimension(sys_size), intent(IN) :: qK_cons_vf
         type(scalar_field), dimension(sys_size), intent(INOUT) :: qK_prim_vf
-
-        type(scalar_field), &
-            allocatable, optional, dimension(:), &
-            intent(IN) :: gm_alphaK_vf
-
-        type(int_bounds_info), optional, intent(IN) :: ix, iy
 
         real(kind(0d0)), dimension(num_fluids) :: alpha_K, alpha_rho_K
         real(kind(0d0)), dimension(2) :: Re_K
@@ -360,7 +341,8 @@ contains
 #ifdef MFC_SIMULATION
                 ! If in simulation, use acc mixture subroutines
                 call s_convert_species_to_mixture_variables_acc(rho_K, gamma_K, pi_inf_K, &
-                                                                    alpha_K, alpha_rho_K, Re_K, k, l)
+                                                                    alpha_K, alpha_rho_K, Re_K)
+                                                                ! , k, l)
 #else
                 ! If pre-processing, use non acc mixture subroutines
                 call s_convert_to_mixture_variables(qK_cons_vf, j, k, &
@@ -419,7 +401,7 @@ contains
         real(kind(0d0)) :: pi_inf
         real(kind(0d0)) :: dyn_pres
 
-        integer :: i, j, k, l, q !< Generic loop iterators
+        integer :: i, j, k
 
 #ifndef MFC_SIMULATION
         ! Converting the primitive variables to the conservative variables
@@ -505,7 +487,7 @@ contains
         real(kind(0d0)) :: pi_inf_K
         real(kind(0d0)), dimension(2) :: Re_K
 
-        integer :: i, j, k, l !< Generic loop iterators
+        integer :: i, j, k !< Generic loop iterators
 
         is1b = is1%beg; is1e = is1%end
         is2b = is2%beg; is2e = is2%end
@@ -541,7 +523,7 @@ contains
 
                 pres_K = qK_prim_vf(j, k, E_idx)
                 call s_convert_species_to_mixture_variables_acc(rho_K, gamma_K, pi_inf_K, &
-                                                                alpha_K, alpha_rho_K, Re_K, j, k)
+                                                                alpha_K, alpha_rho_K, Re_K)
 
                 ! Computing the energy from the pressure
                 E_K = gamma_K*pres_K + pi_inf_K + 5d-1*rho_K*vel_K_sum

@@ -36,7 +36,7 @@ module m_mpi_proxy
 
     !> @name Generic flags used to identify and report MPI errors
     !> @{
-    integer, private :: err_code, ierr
+    integer, private :: ierr
     !> @}
 
 !$acc declare create(q_cons_buff_send, q_cons_buff_recv)
@@ -227,8 +227,6 @@ contains
 
 #ifdef MFC_MPI
 
-        integer :: j
-
         call MPI_GATHER(time_avg, 1, MPI_DOUBLE_PRECISION, proc_time(0), 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
 
 #endif
@@ -261,7 +259,7 @@ contains
             !! Remaining number of cells, in a particular coordinate direction,
             !! after the majority is divided up among the available processors
 
-        integer :: i, j !< Generic loop iterators
+        integer :: i !< Generic loop iterators
 
         if (num_procs == 1 .and. parallel_io) then
             do i = 1, num_dims
@@ -577,29 +575,23 @@ contains
         !!      on the rank 0 processor.
         !!  @param icfl_max_loc Local maximum ICFL stability criterion
         !!  @param vcfl_max_loc Local maximum VCFL stability criterion
-        !!  @param ccfl_max_loc Local maximum CCFL stability criterion
         !!  @param Rc_min_loc Local minimum Rc stability criterion
         !!  @param icfl_max_glb Global maximum ICFL stability criterion
         !!  @param vcfl_max_glb Global maximum VCFL stability criterion
-        !!  @param ccfl_max_glb Global maximum CCFL stability criterion
         !!  @param Rc_min_glb Global minimum Rc stability criterion
     subroutine s_mpi_reduce_stability_criteria_extrema(icfl_max_loc, & ! --
                                                        vcfl_max_loc, &
-                                                       ccfl_max_loc, &
                                                        Rc_min_loc, &
                                                        icfl_max_glb, &
                                                        vcfl_max_glb, &
-                                                       ccfl_max_glb, &
                                                        Rc_min_glb)
 
         real(kind(0d0)), intent(IN) :: icfl_max_loc
         real(kind(0d0)), intent(IN) :: vcfl_max_loc
-        real(kind(0d0)), intent(IN) :: ccfl_max_loc
         real(kind(0d0)), intent(IN) :: Rc_min_loc
 
         real(kind(0d0)), intent(OUT) :: icfl_max_glb
         real(kind(0d0)), intent(OUT) :: vcfl_max_glb
-        real(kind(0d0)), intent(OUT) :: ccfl_max_glb
         real(kind(0d0)), intent(OUT) :: Rc_min_glb
 
 #ifdef MFC_MPI

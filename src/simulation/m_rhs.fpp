@@ -44,43 +44,18 @@ module m_rhs
  s_finalize_rhs_module
 
 
-    type(vector_field) :: q_cons_qp !<
-    !! This variable contains the WENO-reconstructed values of the cell-average
-    !! conservative variables, which are located in q_cons_vf, at cell-interior
-    !! Gaussian quadrature points (QP).
+    type(vector_field) :: q_cons_qp 
+    type(vector_field) :: q_prim_qp
 
-    type(vector_field) :: q_prim_qp !<
-    !! The primitive variables at cell-interior Gaussian quadrature points. These
-    !! are calculated from the conservative variables and gradient magnitude (GM)
-    !! of the volume fractions, q_cons_qp and gm_alpha_qp, respectively.
-
-    !> @name The left (L) and the right (R) WENO-reconstructed cell-boundary values,
-    !! including cell-boundary Gaussian quadrature points, of the cell-average
-    !! conservative variables. The latter are stored in the variable q_cons_qp
-    !! (NDQP - normal direction quadrature points).
-    !> @{
     type(vector_field), allocatable, dimension(:) :: qL_cons_n
     type(vector_field), allocatable, dimension(:) :: qR_cons_n
-    !> @}
 
-    !> @name The left and right WENO-reconstructed cell-boundary values, that include
-    !! cell-boundary Gaussian quadrature points, of the cell-averaged primitive
-    !! variables. The latter are stored in the variable q_prim_qp.
-    !> @{
     type(vector_field), allocatable, dimension(:) :: qL_prim_n
     type(vector_field), allocatable, dimension(:) :: qR_prim_n
-    !> @}
 
-    !> @name The first-order spatial derivatives of the primitive variables at cell-
-    !! interior Guassian quadrature points. These are WENO-reconstructed from
-    !! their respective cell-average values, obtained through the application
-    !! of the divergence theorem on the integral-average cell-boundary values
-    !! of the primitive variables, located in qK_prim_n, where K = L or R.
-    !> @{
     type(vector_field) :: dq_prim_dx_qp
     type(vector_field) :: dq_prim_dy_qp
     type(vector_field) :: gm_vel_qp
-    !> @}
 
     !> @name The left and right WENO-reconstructed cell-boundary values of the cell-
     !! average first-order spatial derivatives of the primitive variables. The
@@ -91,18 +66,6 @@ module m_rhs
     type(vector_field), allocatable, dimension(:) :: dqL_prim_dy_n
     type(vector_field), allocatable, dimension(:) :: dqR_prim_dx_n
     type(vector_field), allocatable, dimension(:) :: dqR_prim_dy_n
-    !> @}
-
-    type(vector_field) :: gm_alpha_qp  !<
-    !! The gradient magnitude of the volume fractions at cell-interior Gaussian
-    !! quadrature points. gm_alpha_qp is calculated from individual first-order
-    !! spatial derivatives located in dq_prim_ds_qp.
-
-    !> @name The left and right WENO-reconstructed cell-boundary values of the cell-
-    !! average gradient magnitude of volume fractions, located in gm_alpha_qp.
-    !> @{
-    type(vector_field), allocatable, dimension(:) :: gm_alphaL_n
-    type(vector_field), allocatable, dimension(:) :: gm_alphaR_n
     !> @}
 
     !> @name The cell-boundary values of the fluxes (src - source). 
@@ -155,9 +118,9 @@ module m_rhs
 
 !$acc declare create(q_cons_qp,q_prim_qp,qL_cons_n,qR_cons_n,qL_prim_n,qR_prim_n,  &
 !$acc   dq_prim_dx_qp,dq_prim_dy_qp,gm_vel_qp,dqL_prim_dx_n,dqL_prim_dy_n, &
-!$acc   dqR_prim_dx_n,dqR_prim_dy_n,gm_alpha_qp,       &
-!$acc   gm_alphaL_n,gm_alphaR_n,flux_n,flux_src_n,       &
-!$acc   tau_Re_vf,qL_prim, qR_prim, iv,ix, iy,is1,is2, &
+!$acc   dqR_prim_dx_n,dqR_prim_dy_n,       &
+!$acc   flux_n,flux_src_n,       &
+!$acc   qL_prim, qR_prim, iv,ix, iy,is1,is2, &
 !$acc   myflux_vf, myflux_src_vf,alf_sum, &
 !$acc   blkmod1, blkmod2, alpha1, alpha2, qL_rsx_vf, qL_rsy_vf, qR_rsx_vf, qR_rsy_vf, &
 !$acc   dqL_rsx_vf, dqL_rsy_vf, dqR_rsx_vf, dqR_rsy_vf, &
@@ -370,17 +333,6 @@ contains
             end if
         end if
 
-        ! ==================================================================
-
-        ! Allocation of gm_alphaK_n =====================================
-        @:ALLOCATE(gm_alphaL_n(1:num_dims))
-        @:ALLOCATE(gm_alphaR_n(1:num_dims))
-        ! ==================================================================
-
-        ! Configuring Coordinate Direction Indexes =========================
-
-        ! ==================================================================
-
         ! Allocation/Association of flux_n, flux_src_n===
         @:ALLOCATE(flux_n(1:num_dims))
         @:ALLOCATE(flux_src_n(1:num_dims))
@@ -413,7 +365,7 @@ contains
                 do l = adv_idx%beg + 1, adv_idx%end
                     flux_src_n(i)%vf(l)%sf => &
                         flux_src_n(i)%vf(adv_idx%beg)%sf
-!$acc enter data attach(flux_src_n(i)%vf(l)%sf(ix%beg:ix%end,iy%beg:iy%end))
+                    !$acc enter data attach(flux_src_n(i)%vf(l)%sf(ix%beg:ix%end,iy%beg:iy%end))
                 end do
 
             else
@@ -504,9 +456,7 @@ contains
         call nvtxStartRange("RHS-CONVERT")
         call s_convert_conservative_to_primitive_variables( &
             q_cons_qp%vf, &
-            q_prim_qp%vf, &
-            gm_alpha_qp%vf, &
-            ix, iy)
+            q_prim_qp%vf )
         call nvtxEndRange
 
 
@@ -604,18 +554,19 @@ contains
 
             ! Computing Riemann Solver Flux and Source Flux =================
 
-            call s_hllc_riemann_solver(qR_rsx_vf, qR_rsy_vf, &
+            call s_hllc_riemann_solver( &
+                                  qR_rsx_vf, &
+                                  qR_rsy_vf, &
                                   dqR_prim_dx_n(id)%vf, &
                                   dqR_prim_dy_n(id)%vf, &
-                                  qR_prim(id)%vf, &
-                                  qL_rsx_vf, qL_rsy_vf, &
+                                  qL_rsx_vf, &
+                                  qL_rsy_vf, &
                                   dqL_prim_dx_n(id)%vf, &
                                   dqL_prim_dy_n(id)%vf, &
-                                  qL_prim(id)%vf, &
-                                  q_prim_qp%vf, &
                                   flux_n(id)%vf, &
                                   flux_src_n(id)%vf, &
                                   id, ix, iy)
+
             call nvtxEndRange
 
             ! ===============================================================
@@ -1001,12 +952,12 @@ contains
         if (n > 0) then
             call s_weno(v_vf(iv%beg:iv%end), &
                 vL_x(:, :, iv%beg:iv%end), vL_y(:, :, iv%beg:iv%end), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, iv%beg:iv%end),  &
-                norm_dir, weno_dir, &
+                weno_dir, &
                 is1, is2)
         else
             call s_weno(v_vf(iv%beg:iv%end), &
                 vL_x(:, :, iv%beg:iv%end), vL_y(:, :, :), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, :), &
-                norm_dir, weno_dir, &
+                weno_dir, &
                 is1, is2)
         end if
 

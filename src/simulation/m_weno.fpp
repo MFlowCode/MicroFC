@@ -88,14 +88,12 @@ module m_weno
     type(int_bounds_info) :: is1, is2
     !> @}
 
-    real(kind(0d0)) :: test
-
 !$acc declare create( &
 !$acc                v_rs_ws_x, v_rs_ws_y, &
 !$acc                poly_coef_cbL_x,poly_coef_cbL_y, &
 !$acc                poly_coef_cbR_x,poly_coef_cbR_y,d_cbL_x,       &
 !$acc                d_cbL_y,d_cbR_x,d_cbR_y,beta_coef_x,beta_coef_y,   &
-!$acc                v_size, is1, is2, test)
+!$acc                v_size, is1, is2)
 
 contains
 
@@ -104,7 +102,6 @@ contains
         !!      other procedures that are necessary to setup the module.
     subroutine s_initialize_weno_module() ! --------------------------------
 
-        integer :: i, j
         if (weno_order == 1) return
 
         ! Allocating/Computing WENO Coefficients in x-direction ============
@@ -366,12 +363,11 @@ contains
     end subroutine s_compute_weno_coefficients ! ---------------------------
 
     subroutine s_weno(v_vf, vL_rs_vf_x, vL_rs_vf_y, vR_rs_vf_x, vR_rs_vf_y, & ! -------------------
-                          norm_dir, weno_dir, &
+                          weno_dir, &
                           is1_d, is2_d)
 
         type(scalar_field), dimension(1:), intent(IN) :: v_vf
         real(kind(0d0)), dimension(startx:, starty:, 1:), intent(INOUT) ::  vL_rs_vf_x, vL_rs_vf_y, vR_rs_vf_x, vR_rs_vf_y
-        integer, intent(IN) :: norm_dir
         integer, intent(IN) :: weno_dir
         type(int_bounds_info), intent(IN) :: is1_d, is2_d
 
@@ -380,14 +376,8 @@ contains
         real(kind(0d0)), dimension(0:weno_polyn) :: alpha
         real(kind(0d0)), dimension(0:weno_polyn) :: omega
         real(kind(0d0)), dimension(0:weno_polyn) :: beta
-        real(kind(0d0)), pointer :: beta_p(:)
 
-        integer :: i, j, k, r, s, w
-
-        integer :: t1, t2, c_rate, c_max
-
-
-        integer :: is1b, is2b, is1e, is2e
+        integer :: i, j, k
 
         is1 = is1_d
         is2 = is2_d
@@ -395,8 +385,7 @@ contains
 !$acc update device(is1, is2)
 
         if (weno_order /= 1) then
-            call s_initialize_weno(v_vf, &
-                                   norm_dir, weno_dir)
+            call s_initialize_weno(v_vf, weno_dir)
         end if
 
         if (weno_order == 1) then
@@ -559,19 +548,14 @@ contains
         !! @param v_vf Cell-averaged variables
         !! @param vL_vf Left WENO reconstructed cell-boundary values
         !! @param vR_vf Right WENO reconstructed cell-boundary values
-        !! @param norm_dir Characteristic decommposition coordinate direction
         !! @param weno_dir Coordinate direction of the WENO reconstruction
         !! @param is1 Index bounds in first coordinate direction
         !! @param is2 Index bounds in second coordinate direction
-    subroutine s_initialize_weno(v_vf, & ! ---------
-                                 norm_dir, weno_dir)
+    subroutine s_initialize_weno(v_vf, weno_dir)
 
         type(scalar_field), dimension(:), intent(IN) :: v_vf
-
-        integer, intent(IN) :: norm_dir
         integer, intent(IN) :: weno_dir
-
-        integer :: i, j, k, l
+        integer :: j, k, l
 
         ! Determining the number of cell-average variables which will be
         ! WENO-reconstructed and mapping their indical bounds in the x-,
@@ -616,8 +600,6 @@ contains
 
     !>  Module deallocation and/or disassociation procedures
     subroutine s_finalize_weno_module() ! ----------------------------------
-
-        integer :: i, j
 
         if (weno_order == 1) return
 

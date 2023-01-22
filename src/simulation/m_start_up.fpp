@@ -178,11 +178,6 @@ contains
                 (num_fluids < 1 .or. num_fluids > num_fluids)) then
             print '(A)', 'Unsupported value of num_fluids. Exiting ...'
             call s_mpi_abort()
-        elseif (time_stepper < 1 .or. time_stepper > 5) then
-            if (time_stepper /= 23) then
-                print '(A)', 'Unsupported value of time_stepper. Exiting ...'
-                call s_mpi_abort()
-            end if
         elseif (all(weno_order /= (/1, 3, 5/))) then
             print '(A)', 'Unsupported value of weno_order. Exiting ...'
             call s_mpi_abort()

@@ -491,14 +491,10 @@ module m_viscous
 
         if (n > 0) then
             call s_weno(v_vf(iv%beg:iv%end), &
-                vL_x(:, :, iv%beg:iv%end), vL_y(:, :, iv%beg:iv%end),  vR_x(:, :, iv%beg:iv%end), vR_y(:, :, iv%beg:iv%end), &
-                            norm_dir, weno_dir, &
-                            is1, is2)
+                vL_x(:, :, iv%beg:iv%end), vL_y(:, :, iv%beg:iv%end),  vR_x(:, :, iv%beg:iv%end), vR_y(:, :, iv%beg:iv%end), weno_dir, is1, is2)
         else
             call s_weno(v_vf(iv%beg:iv%end), &
-                        vL_x(:, :, iv%beg:iv%end), vL_y(:, :, :), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, :), &
-                            norm_dir, weno_dir, &
-                            is1, is2)
+                        vL_x(:, :, iv%beg:iv%end), vL_y(:, :, :), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, :), weno_dir, is1, is2)
         end if
 
         if (any(Re_size > 0)) then
@@ -563,14 +559,10 @@ module m_viscous
 
         if (n > 0) then
             call s_weno(v_vf(iv%beg:iv%end), &
-                vL_x(:, :, iv%beg:iv%end), vL_y(:, :, iv%beg:iv%end), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, iv%beg:iv%end),  &
-                            norm_dir, weno_dir, &
-                            is1, is2)
+                vL_x(:, :, iv%beg:iv%end), vL_y(:, :, iv%beg:iv%end), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, iv%beg:iv%end), weno_dir, is1, is2)
         else
             call s_weno(v_vf(iv%beg:iv%end), &
-                        vL_x(:, :, iv%beg:iv%end), vL_y(:, :, :), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, :),  &
-                            norm_dir, weno_dir, &
-                            is1, is2)
+                        vL_x(:, :, iv%beg:iv%end), vL_y(:, :, :), vR_x(:, :, iv%beg:iv%end), vR_y(:, :, :), weno_dir, is1, is2)
         end if
 
         if (any(Re_size > 0)) then

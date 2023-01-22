@@ -230,7 +230,7 @@ contains
         !!  these parameters once they are read from the input file.
     subroutine s_assign_default_values_to_user_inputs() ! ------------------
 
-        integer :: i, j !< Generic loop iterator
+        integer :: i !< Generic loop iterator
 
         ! Logistics
         case_dir = dflt_char
@@ -286,13 +286,7 @@ contains
         !!      other procedures that are necessary to setup the module.
     subroutine s_initialize_global_parameters_module() ! -------------------
 
-        integer :: tmp_idx !< Temporary indexes storage
-        integer :: i, j !< Generic loop iterators
-        integer :: k !< Generic counter
-        integer :: fac
-        integer :: i1, i2
-
-        type(int_bounds_info) :: ix, iy
+        integer :: i, k
 
         #:if not MFC_CASE_OPTIMIZATION
             ! Determining the degree of the WENO polynomials
@@ -437,8 +431,6 @@ contains
 
     !> Module deallocation and/or disassociation procedures
     subroutine s_finalize_global_parameters_module() ! ---------------------
-
-        integer :: i
 
         ! Deallocating the variables bookkeeping the indexes of any viscous
         ! fluids and any pairs of fluids whose interfaces supported effects

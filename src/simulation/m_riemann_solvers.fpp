@@ -40,69 +40,15 @@ module m_riemann_solvers
     real(kind(0d0)), allocatable, dimension(:, :, :) :: vel_src_rsx_vf
     real(kind(0d0)), allocatable, dimension(:, :, :) :: vel_src_rsy_vf
 
-    real(kind(0d0)), allocatable, dimension(:, :, :) :: mom_sp_rsx_vf
-    real(kind(0d0)), allocatable, dimension(:, :, :) :: mom_sp_rsy_vf
-
-    !> @name Left and right, WENO-reconstructed, cell-boundary values of cell-average
-    !! partial densities, density, velocity, pressure, internal energy, energy, enthalpy, volume
-    !! fractions, mass fractions, the specific heat ratio and liquid stiffness functions, speed
-    !! of sound, shear and volume Reynolds numbers and the Weber numbers. These
-    !! variables are left and right states of the Riemann problem obtained from
-    !! qK_prim_rs_vf and kappaK_rs_vf.
-    !> @{
-    real(kind(0d0)), allocatable, dimension(:) :: alpha_rho_L, alpha_rho_R
-    real(kind(0d0)) :: rho_L, rho_R
-    real(kind(0d0)), allocatable, dimension(:) :: vel_L, vel_R
-    real(kind(0d0)) :: pres_L, pres_R
-    real(kind(0d0)) :: E_L, E_R
-    real(kind(0d0)) :: H_L, H_R
-    real(kind(0d0)), allocatable, dimension(:) :: alpha_L, alpha_R
-    real(kind(0d0)) :: Y_L, Y_R
-    real(kind(0d0)) :: gamma_L, gamma_R
-    real(kind(0d0)) :: pi_inf_L, pi_inf_R
-    real(kind(0d0)) :: c_L, c_R
-    real(kind(0d0)), dimension(2) :: Re_L, Re_R
-    real(kind(0d0)), allocatable, dimension(:) :: tau_e_L, tau_e_R
-    real(kind(0d0)), allocatable, dimension(:) :: G_L, G_R
-
-!$acc declare create(alpha_rho_L, alpha_rho_R,rho_L, rho_R,vel_L, vel_R,pres_L, pres_R, &
-!$acc    E_L, E_R, H_L, H_R, alpha_L, alpha_R, Y_L, Y_R, gamma_L, gamma_R,pi_inf_L, pi_inf_R, &
-!$acc    c_L, c_R,Re_L, Re_R,tau_e_L, tau_e_R, G_L, G_R)
-
-    !> @}
-
     !> @name Roe or arithmetic average density, velocity, enthalpy, volume fractions,
     !! specific heat ratio function, speed of sound, shear and volume Reynolds
     !! numbers, Weber numbers and curvatures, at the cell-boundaries, computed
     !! from the left and the right states of the Riemann problem
     !> @{
-    real(kind(0d0)) :: rho_avg
-    real(kind(0d0)) :: H_avg
-    type(scalar_field), allocatable, dimension(:) :: alpha_avg_rs_vf
-    real(kind(0d0)) :: gamma_avg
-    real(kind(0d0)) :: c_avg
     real(kind(0d0)), allocatable, dimension(:, :, :) :: Re_avg_rsx_vf
     real(kind(0d0)), allocatable, dimension(:, :, :) :: Re_avg_rsy_vf
-!$acc declare create(rho_avg, H_avg, alpha_avg_rs_vf, gamma_avg, c_avg,  Re_avg_rsx_vf, Re_avg_rsy_vf)
+!$acc declare create(Re_avg_rsx_vf, Re_avg_rsy_vf)
     !> @}
-
-    !> @name Left, right and star (S) region wave speeds
-    !> @{
-    real(kind(0d0)) :: s_L, s_R, s_S
-    !> @}
-
-    !> Minus (M) and plus (P) wave speeds
-    !> @{
-    real(kind(0d0)) :: s_M, s_P
-    !> @}
-
-    !> Minus and plus wave speeds functions
-    !> @{
-    real(kind(0d0)) :: xi_M, xi_P
-    !> @}
-    real(kind(0d0)) :: xi_L, xi_R
-
-!$acc declare create(s_L, s_R, s_S, s_M, s_P, xi_M, xi_P, xi_L, xi_R)
 
     !> @name Indical bounds in the s1-, s2- and s3-directions
     !> @{
@@ -124,18 +70,12 @@ contains
 
     subroutine s_hllc_riemann_solver(qL_prim_rsx_vf, qL_prim_rsy_vf, dqL_prim_dx_vf, & ! ------
                                      dqL_prim_dy_vf, &
-                                     qL_prim_vf, &
                                      qR_prim_rsx_vf, qR_prim_rsy_vf, dqR_prim_dx_vf, &
                                      dqR_prim_dy_vf, &
-                                     qR_prim_vf, &
-                                     q_prim_vf, &
                                      flux_vf, flux_src_vf, &
                                      norm_dir, ix, iy)
 
         real(kind(0d0)), dimension(startx:, starty:, 1:), intent(INOUT) :: qL_prim_rsx_vf, qL_prim_rsy_vf, qR_prim_rsx_vf, qR_prim_rsy_vf
-        type(scalar_field), dimension(sys_size), intent(IN) :: q_prim_vf
-
-        type(scalar_field), allocatable, dimension(:), intent(INOUT) :: qL_prim_vf, qR_prim_vf
 
         type(scalar_field), &
             allocatable, dimension(:), &
@@ -150,14 +90,11 @@ contains
         integer, intent(IN) :: norm_dir
         type(int_bounds_info), intent(IN) :: ix, iy
 
-        real(kind(0d0)), dimension(num_fluids) :: alpha_rho_L, alpha_rho_R
         real(kind(0d0)) :: rho_L, rho_R
         real(kind(0d0)), dimension(num_dims) :: vel_L, vel_R
         real(kind(0d0)) :: pres_L, pres_R
         real(kind(0d0)) :: E_L, E_R
         real(kind(0d0)) :: H_L, H_R
-        real(kind(0d0)), dimension(num_fluids) :: alpha_L, alpha_R
-        real(kind(0d0)) :: Y_L, Y_R
         real(kind(0d0)) :: gamma_L, gamma_R
         real(kind(0d0)) :: pi_inf_L, pi_inf_R
         real(kind(0d0)) :: c_L, c_R
@@ -171,16 +108,9 @@ contains
         real(kind(0d0)) :: s_L, s_R, s_M, s_P, s_S
         real(kind(0d0)) :: xi_L, xi_R !< Left and right wave speeds functions
         real(kind(0d0)) :: xi_M, xi_P
-
-        real(kind(0d0)) :: PbwR3Lbar, Pbwr3Rbar
-        real(kind(0d0)) :: R3Lbar, R3Rbar
-        real(kind(0d0)) :: R3V2Lbar, R3V2Rbar
-
         real(kind(0d0)) :: vel_L_rms, vel_R_rms, vel_avg_rms
-        real(kind(0d0)) :: blkmod1, blkmod2
-        real(kind(0d0)) :: pres_SL, pres_SR, Ms_L, Ms_R
 
-        integer :: i, j, k, l, q !< Generic loop iterators
+        integer :: i, j, k, q !< Generic loop iterators
         integer :: idx1, idxi
 
         ! Populating the buffers of the left and right Riemann problem
@@ -188,17 +118,13 @@ contains
         call s_populate_riemann_states_variables_buffers( &
             qL_prim_rsx_vf, qL_prim_rsy_vf, dqL_prim_dx_vf, &
             dqL_prim_dy_vf, &
-            qL_prim_vf, &
             qR_prim_rsx_vf, qR_prim_rsy_vf, dqR_prim_dx_vf, &
             dqR_prim_dy_vf, &
-            qR_prim_vf, &
             norm_dir, ix, iy)
 
         ! Reshaping inputted data based on dimensional splitting direction
-        call s_initialize_riemann_solver( &
-            q_prim_vf, &
-            flux_vf, flux_src_vf, &
-            norm_dir, ix, iy)
+        call s_initialize_riemann_solver( flux_src_vf, norm_dir)
+
         #:for NORM_DIR, XYZ in [(1, 'x'), (2, 'y')]
 
             if (norm_dir == ${NORM_DIR}$) then
@@ -406,27 +332,22 @@ contains
         if (any(Re_size > 0)) then
             if (weno_Re_flux) then
                 call s_compute_viscous_source_flux( &
-                    qL_prim_vf(momxb:momxe), &
                     dqL_prim_dx_vf(momxb:momxe), &
                     dqL_prim_dy_vf(momxb:momxe), &
-                    qR_prim_vf(momxb:momxe), &
                     dqR_prim_dx_vf(momxb:momxe), &
                     dqR_prim_dy_vf(momxb:momxe), &
-                    flux_src_vf, norm_dir, ix, iy)
+                    flux_src_vf, norm_dir)
             else
                 call s_compute_viscous_source_flux( &
-                    q_prim_vf(momxb:momxe), &
                     dqL_prim_dx_vf(momxb:momxe), &
                     dqL_prim_dy_vf(momxb:momxe), &
-                    q_prim_vf(momxb:momxe), &
                     dqR_prim_dx_vf(momxb:momxe), &
                     dqR_prim_dy_vf(momxb:momxe), &
-                    flux_src_vf, norm_dir, ix, iy)
+                    flux_src_vf, norm_dir)
             end if
         end if
 
-        call s_finalize_riemann_solver(flux_vf, flux_src_vf, &
-                                       norm_dir, ix, iy)
+        call s_finalize_riemann_solver(flux_vf, flux_src_vf, norm_dir)
 
     end subroutine s_hllc_riemann_solver
 
@@ -508,10 +429,6 @@ contains
     !>  The purpose of this subroutine is to populate the buffers
         !!      of the left and right Riemann states variables, depending
         !!      on the boundary conditions.
-        !!  @param qL_prim_vf The  left WENO-reconstructed cell-boundary values of the
-        !!      cell-average primitive variables
-        !!  @param qR_prim_vf The right WENO-reconstructed cell-boundary values of the
-        !!      cell-average primitive variables
         !!  @param dqL_prim_dx_vf The  left WENO-reconstructed cell-boundary values of the
         !!      first-order x-dir spatial derivatives
         !!  @param dqL_prim_dy_vf The  left WENO-reconstructed cell-boundary values of the
@@ -528,10 +445,8 @@ contains
     subroutine s_populate_riemann_states_variables_buffers( & ! ------------
         qL_prim_rsx_vf, qL_prim_rsy_vf, dqL_prim_dx_vf, &
         dqL_prim_dy_vf, &
-        qL_prim_vf, &
         qR_prim_rsx_vf, qR_prim_rsy_vf, dqR_prim_dx_vf, &
         dqR_prim_dy_vf, &
-        qR_prim_vf, &
         norm_dir, ix, iy)
 
         real(kind(0d0)), dimension(startx:, starty:, 1:), intent(INOUT) :: qL_prim_rsx_vf, qL_prim_rsy_vf, qR_prim_rsx_vf, qR_prim_rsy_vf
@@ -539,14 +454,13 @@ contains
         type(scalar_field), &
             allocatable, dimension(:), &
             intent(INOUT) :: dqL_prim_dx_vf, dqR_prim_dx_vf, &
-                             dqL_prim_dy_vf, dqR_prim_dy_vf, &
-                             qL_prim_vf, qR_prim_vf
+                             dqL_prim_dy_vf, dqR_prim_dy_vf
 
         integer, intent(IN) :: norm_dir
 
         type(int_bounds_info), intent(IN) :: ix, iy
 
-        integer :: i, j, k, l !< Generic loop iterator
+        integer :: i, j, k !< Generic loop iterator
 
         if (norm_dir == 1) then
             is1 = ix; is2 = iy
@@ -709,32 +623,20 @@ contains
         !!      the association of pointers and/or the execution of any
         !!      other procedures needed to configure the chosen Riemann
         !!      solver algorithm.
-        !!  @param qL_prim_vf The  left WENO-reconstructed cell-boundary values of the
-        !!      cell-average primitive variables
-        !!  @param qR_prim_vf The right WENO-reconstructed cell-boundary values of the
-        !!      cell-average primitive variables
-        !!  @param flux_vf Intra-cell fluxes
         !!  @param flux_src_vf Intra-cell fluxes sources
         !!  @param norm_dir Dir. splitting direction
-        !!  @param ix Index bounds in the x-dir
-        !!  @param iy Index bounds in the y-dir
-        !!  @param q_prim_vf Cell-averaged primitive variables
     subroutine s_initialize_riemann_solver( &
-        q_prim_vf, &
-        flux_vf, flux_src_vf, &
-        norm_dir, ix, iy)
-
-        type(scalar_field), dimension(sys_size), intent(IN) :: q_prim_vf
+        flux_src_vf, &
+        norm_dir)
 
         type(scalar_field), &
             dimension(sys_size), &
-            intent(INOUT) :: flux_vf, flux_src_vf
+            intent(INOUT) :: flux_src_vf
 
         integer, intent(IN) :: norm_dir
 
-        type(int_bounds_info), intent(IN) :: ix, iy
 
-        integer :: i, j, k, l ! Generic loop iterators
+        integer :: i, j, k ! Generic loop iterators
 
         ! Reshaping Inputted Data in x-direction ===========================
 
@@ -771,8 +673,6 @@ contains
     !>  The goal of this subroutine is to evaluate and account
         !!      for the contribution of viscous stresses in the source
         !!      flux for the momentum and energy.
-        !!  @param velL_vf  Left, WENO reconstructed, cell-boundary values of the velocity
-        !!  @param velR_vf Right, WENO reconstructed, cell-boundary values of the velocity
         !!  @param dvelL_dx_vf  Left, WENO reconstructed cell-avg. x-dir derivative of the velocity
         !!  @param dvelL_dy_vf  Left, WENO reconstructed cell-avg. y-dir derivative of the velocity
         !!  @param dvelR_dx_vf Right, WENO reconstructed cell-avg. x-dir derivative of the velocity
@@ -781,20 +681,16 @@ contains
         !!  @param norm_dir Dimensional splitting coordinate direction
         !!  @param ix Index bounds in  first coordinate direction
         !!  @param iy Index bounds in second coordinate direction
-    subroutine s_compute_viscous_source_flux(velL_vf, & ! -------------
-                                                       dvelL_dx_vf, &
-                                                       dvelL_dy_vf, &
-                                                       velR_vf, &
-                                                       dvelR_dx_vf, &
-                                                       dvelR_dy_vf, &
-                                                       flux_src_vf, &
-                                                       norm_dir, &
-                                                       ix, iy)
+    subroutine s_compute_viscous_source_flux(  dvelL_dx_vf, &
+                                               dvelL_dy_vf, &
+                                               dvelR_dx_vf, &
+                                               dvelR_dy_vf, &
+                                               flux_src_vf, &
+                                               norm_dir )
 
         type(scalar_field), &
             dimension(num_dims), &
-            intent(IN) :: velL_vf, velR_vf, &
-                          dvelL_dx_vf, dvelR_dx_vf, &
+            intent(IN) :: dvelL_dx_vf, dvelR_dx_vf, &
                           dvelL_dy_vf, dvelR_dy_vf
 
         type(scalar_field), &
@@ -802,8 +698,6 @@ contains
             intent(INOUT) :: flux_src_vf
 
         integer, intent(IN) :: norm_dir
-
-        type(int_bounds_info), intent(IN) :: ix, iy
 
         ! Arithmetic mean of the left and right, WENO-reconstructed, cell-
         ! boundary values of cell-average first-order spatial derivatives
@@ -813,7 +707,7 @@ contains
 
         real(kind(0d0)), dimension(num_dims, num_dims) :: tau_Re !< Viscous stress tensor
 
-        integer :: i, j, k, l !< Generic loop iterators
+        integer :: i, j, k !< Generic loop iterators
 
         ! Viscous Stresses in x-direction ==================================
         if (norm_dir == 1) then
@@ -1015,8 +909,7 @@ contains
         !!  @param norm_dir Dimensional splitting coordinate direction
         !!  @param ix   Index bounds in  first coordinate direction
         !!  @param iy   Index bounds in second coordinate direction
-    subroutine s_finalize_riemann_solver(flux_vf, flux_src_vf, & ! --------
-                                         norm_dir, ix, iy)
+    subroutine s_finalize_riemann_solver(flux_vf, flux_src_vf, norm_dir)
 
         type(scalar_field), &
             dimension(sys_size), &
@@ -1024,9 +917,7 @@ contains
 
         integer, intent(IN) :: norm_dir
 
-        type(int_bounds_info), intent(IN) :: ix, iy
-
-        integer :: i, j, k, l !< Generic loop iterators
+        integer :: i, j, k !< Generic loop iterators
 
         ! Reshaping Outputted Data in y-direction ==========================
         if (norm_dir == 2) then
@@ -1069,21 +960,11 @@ contains
 
         ! ==================================================================
 
-        ! ==================================================================
-
     end subroutine s_finalize_riemann_solver ! -----------------------------
 
     !> Module deallocation and/or disassociation procedures
     subroutine s_finalize_riemann_solvers_module() ! -----------------------
 
-        ! Deallocating the variables that were utilized to formulate the
-        ! left, right and average states of the Riemann problem, as well
-        ! the Riemann problem solution
-
-        integer :: i
-
-        ! Disassociating the pointer to the procedure that was utilized to
-        ! to convert mixture or species variables to the mixture variables
         s_convert_to_mixture_variables => null()
 
         if (Re_size(1) > 0) then
