@@ -1,0 +1,1388 @@
+mfc: OK > (venv) Entered the Python virtual environment.
+      ___            ___          ___        
+     /__/\          /  /\        /  /\       spencer@ipsec-10-2-224-211.vpn.gatech.edu [Darwin]
+    |  |::\        /  /:/_      /  /:/       --------------------------------------------------
+    |  |:|:\      /  /:/ /\    /  /:/        
+  __|__|:|\:\    /  /:/ /:/   /  /:/  ___    --jobs 8
+ /__/::::| \:\  /__/:/ /:/   /__/:/  /  /\   --mpi
+ \  \:\~~\__\/  \  \:\/:/    \  \:\ /  /:/   --no-gpu
+  \  \:\         \  \::/      \  \:\  /:/    --debug
+   \  \:\         \  \:\       \  \:\/:/     --targets pre_process, simulation, and post_process
+    \  \:\         \  \:\       \  \::/      
+     \__\/          \__\/        \__\/       $ ./mfc.sh [build, run, clean] --help
+
+Building pre_process:
+
+  $ cmake --build /Users/spencer/Downloads/test/MicroFC/build/pre_process --target pre_process -j 8 --config Debug
+
+[  4%] Building Fortran object CMakeFiles/pre_process.dir/src/pre_process/autogen/m_start_up.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/pre_process/m_start_up.fpp:691:55:
+
+  691 |     subroutine s_read_parallel_grid_data_files(dflt_int)
+      |                                                       1
+Warning: Unused dummy argument 'dflt_int' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/pre_process/m_start_up.fpp:478:53:
+
+  478 |     subroutine s_read_serial_grid_data_files(dflt_int) ! ---
+      |                                                     1
+Warning: Unused dummy argument 'dflt_int' at (1) [-Wunused-dummy-argument]
+[  8%] Building Fortran object CMakeFiles/pre_process.dir/src/pre_process/p_main.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/pre_process/p_main.f90:38:16:
+
+   38 |     integer :: i
+      |                1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+[ 12%] Linking Fortran executable pre_process
+[100%] Built target pre_process
+
+  $ cmake --install /Users/spencer/Downloads/test/MicroFC/build/pre_process
+
+-- Install configuration: "Debug"
+-- Installing: /Users/spencer/Downloads/test/MicroFC/build/install/bin/pre_process
+
+Building simulation:
+
+  $ cmake --build /Users/spencer/Downloads/test/MicroFC/build/simulation --target simulation -j 8 --config Debug
+
+[  3%] Preprocessing (Fypp) m_data_output.fpp
+[  6%] Preprocessing (Fypp) p_main.fpp
+[ 10%] Preprocessing (Fypp) m_global_parameters.fpp
+[ 13%] Preprocessing (Fypp) m_rhs.fpp
+[ 17%] Preprocessing (Fypp) m_riemann_solvers.fpp
+[ 20%] Preprocessing (Fypp) m_start_up.fpp
+[ 24%] Preprocessing (Fypp) m_time_steppers.fpp
+[ 27%] Preprocessing (Fypp) m_mpi_proxy.fpp
+[ 31%] Preprocessing (Fypp) m_viscous.fpp
+[ 34%] Preprocessing (Fypp) m_variables_conversion.fpp
+[ 41%] Preprocessing (Fypp) m_weno.fpp
+[ 41%] Preprocessing (Fypp) macros.fpp
+[ 48%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/m_nvtx.f90.o
+[ 48%] Building Fortran object CMakeFiles/simulation.dir/src/common/m_derived_types.f90.o
+[ 51%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/macros.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_nvtx.f90:7:30:
+
+    7 |     integer, private :: col(7) = [ &
+      |                              1
+Warning: Unused PRIVATE module variable 'col' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_nvtx.f90:13:43:
+
+   13 |     character(len=256), private :: tempName
+      |                                           1
+Warning: Unused PRIVATE module variable 'tempname' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_nvtx.f90:59:42:
+
+   59 |         type(nvtxEventAttributes) :: event
+      |                                          1
+Warning: Unused variable 'event' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_nvtx.f90:56:38:
+
+   56 |     subroutine nvtxStartRange(name, id)
+      |                                      1
+Warning: Unused dummy argument 'id' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_nvtx.f90:56:34:
+
+   56 |     subroutine nvtxStartRange(name, id)
+      |                                  1
+Warning: Unused dummy argument 'name' at (1) [-Wunused-dummy-argument]
+[ 55%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_global_parameters.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:441:20:
+
+  441 |         integer :: i
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:292:22:
+
+  292 |         integer :: fac
+      |                      1
+Warning: Unused variable 'fac' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:293:21:
+
+  293 |         integer :: i1, i2
+      |                     1
+Warning: Unused variable 'i1' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:293:25:
+
+  293 |         integer :: i1, i2
+      |                         1
+Warning: Unused variable 'i2' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:295:35:
+
+  295 |         type(int_bounds_info) :: ix, iy
+      |                                   1
+Warning: Unused variable 'ix' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:295:39:
+
+  295 |         type(int_bounds_info) :: ix, iy
+      |                                       1
+Warning: Unused variable 'iy' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:290:23:
+
+  290 |         integer :: i, j !< Generic loop iterators
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:289:26:
+
+  289 |         integer :: tmp_idx !< Temporary indexes storage
+      |                          1
+Warning: Unused variable 'tmp_idx' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_global_parameters.fpp:233:23:
+
+  233 |         integer :: i, j !< Generic loop iterator
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+[ 58%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_mpi_proxy.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_mpi_proxy.fpp:39:32:
+
+   39 |     integer, private :: err_code, ierr
+      |                                1
+Warning: Unused PRIVATE module variable 'err_code' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_mpi_proxy.fpp:592:67:
+
+  592 |                                                        ccfl_max_glb, &
+      |                                                                   1
+Warning: Dummy argument 'ccfl_max_glb' at (1) was declared INTENT(OUT) but was not set [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_mpi_proxy.fpp:588:67:
+
+  588 |                                                        ccfl_max_loc, &
+      |                                                                   1
+Warning: Unused dummy argument 'ccfl_max_loc' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_mpi_proxy.fpp:264:23:
+
+  264 |         integer :: i, j !< Generic loop iterators
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_mpi_proxy.fpp:230:20:
+
+  230 |         integer :: j
+      |                    1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+[ 62%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_variables_conversion.fpp.f90.o
+[ 65%] Building Fortran object CMakeFiles/simulation.dir/src/common/m_compile_specific.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:508:29:
+
+  508 |         integer :: i, j, k, l !< Generic loop iterators
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:420:35:
+
+  420 |         real(kind(0d0)) :: dyn_pres
+      |                                   1
+Warning: Unused variable 'dyn_pres' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:418:32:
+
+  418 |         real(kind(0d0)) :: gamma
+      |                                1
+Warning: Unused variable 'gamma' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:422:20:
+
+  422 |         integer :: i, j, k, l, q !< Generic loop iterators
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:422:23:
+
+  422 |         integer :: i, j, k, l, q !< Generic loop iterators
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:422:26:
+
+  422 |         integer :: i, j, k, l, q !< Generic loop iterators
+      |                          1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:422:29:
+
+  422 |         integer :: i, j, k, l, q !< Generic loop iterators
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:419:33:
+
+  419 |         real(kind(0d0)) :: pi_inf
+      |                                 1
+Warning: Unused variable 'pi_inf' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:422:32:
+
+  422 |         integer :: i, j, k, l, q !< Generic loop iterators
+      |                                1
+Warning: Unused variable 'q' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:404:70:
+
+  404 |                                                              q_cons_vf)
+      |                                                                      1
+Warning: Unused dummy argument 'q_cons_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:403:70:
+
+  403 |     subroutine s_convert_primitive_to_conservative_variables(q_prim_vf, &
+      |                                                                      1
+Warning: Unused dummy argument 'q_prim_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:417:30:
+
+  417 |         real(kind(0d0)) :: rho
+      |                              1
+Warning: Unused variable 'rho' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:326:73:
+
+  326 |                                                              gm_alphaK_vf, &
+      |                                                                         1
+Warning: Unused dummy argument 'gm_alphak_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:327:63:
+
+  327 |                                                              ix, iy)
+      |                                                               1
+Warning: Unused dummy argument 'ix' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:327:67:
+
+  327 |                                                              ix, iy)
+      |                                                                   1
+Warning: Unused dummy argument 'iy' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:189:87:
+
+  189 |                                                           alpha_K, alpha_rho_K, Re_K, k, l )
+      |                                                                                       1
+Warning: Unused dummy argument 'k' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:189:90:
+
+  189 |                                                           alpha_K, alpha_rho_K, Re_K, k, l )
+      |                                                                                          1
+Warning: Unused dummy argument 'l' at (1) [-Wunused-dummy-argument]
+[ 79%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_weno.fpp.f90.o
+[ 79%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_data_output.fpp.f90.o
+[ 79%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_riemann_solvers.fpp.f90.o
+[ 79%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_start_up.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:81:68:
+
+   81 |     type(scalar_field), allocatable, dimension(:) :: alpha_avg_rs_vf
+      |                                                                    1
+Warning: Unused PRIVATE module variable 'alpha_avg_rs_vf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:59:57:
+
+   59 |     real(kind(0d0)), allocatable, dimension(:) :: alpha_L, alpha_R
+      |                                                         1
+Warning: Unused PRIVATE module variable 'alpha_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:59:66:
+
+   59 |     real(kind(0d0)), allocatable, dimension(:) :: alpha_L, alpha_R
+      |                                                                  1
+Warning: Unused PRIVATE module variable 'alpha_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:53:61:
+
+   53 |     real(kind(0d0)), allocatable, dimension(:) :: alpha_rho_L, alpha_rho_R
+      |                                                             1
+Warning: Unused PRIVATE module variable 'alpha_rho_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:53:74:
+
+   53 |     real(kind(0d0)), allocatable, dimension(:) :: alpha_rho_L, alpha_rho_R
+      |                                                                          1
+Warning: Unused PRIVATE module variable 'alpha_rho_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:83:28:
+
+   83 |     real(kind(0d0)) :: c_avg
+      |                            1
+Warning: Unused PRIVATE module variable 'c_avg' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:63:26:
+
+   63 |     real(kind(0d0)) :: c_L, c_R
+      |                          1
+Warning: Unused PRIVATE module variable 'c_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:63:31:
+
+   63 |     real(kind(0d0)) :: c_L, c_R
+      |                               1
+Warning: Unused PRIVATE module variable 'c_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:57:26:
+
+   57 |     real(kind(0d0)) :: E_L, E_R
+      |                          1
+Warning: Unused PRIVATE module variable 'e_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:57:31:
+
+   57 |     real(kind(0d0)) :: E_L, E_R
+      |                               1
+Warning: Unused PRIVATE module variable 'e_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:66:53:
+
+   66 |     real(kind(0d0)), allocatable, dimension(:) :: G_L, G_R
+      |                                                     1
+Warning: Unused PRIVATE module variable 'g_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:66:58:
+
+   66 |     real(kind(0d0)), allocatable, dimension(:) :: G_L, G_R
+      |                                                          1
+Warning: Unused PRIVATE module variable 'g_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:82:32:
+
+   82 |     real(kind(0d0)) :: gamma_avg
+      |                                1
+Warning: Unused PRIVATE module variable 'gamma_avg' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:61:30:
+
+   61 |     real(kind(0d0)) :: gamma_L, gamma_R
+      |                              1
+Warning: Unused PRIVATE module variable 'gamma_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:61:39:
+
+   61 |     real(kind(0d0)) :: gamma_L, gamma_R
+      |                                       1
+Warning: Unused PRIVATE module variable 'gamma_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:80:28:
+
+   80 |     real(kind(0d0)) :: H_avg
+      |                            1
+Warning: Unused PRIVATE module variable 'h_avg' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:58:26:
+
+   58 |     real(kind(0d0)) :: H_L, H_R
+      |                          1
+Warning: Unused PRIVATE module variable 'h_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:58:31:
+
+   58 |     real(kind(0d0)) :: H_L, H_R
+      |                               1
+Warning: Unused PRIVATE module variable 'h_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:43:69:
+
+   43 |     real(kind(0d0)), allocatable, dimension(:, :, :) :: mom_sp_rsx_vf
+      |                                                                     1
+Warning: Unused PRIVATE module variable 'mom_sp_rsx_vf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:44:69:
+
+   44 |     real(kind(0d0)), allocatable, dimension(:, :, :) :: mom_sp_rsy_vf
+      |                                                                     1
+Warning: Unused PRIVATE module variable 'mom_sp_rsy_vf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:62:31:
+
+   62 |     real(kind(0d0)) :: pi_inf_L, pi_inf_R
+      |                               1
+Warning: Unused PRIVATE module variable 'pi_inf_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:62:41:
+
+   62 |     real(kind(0d0)) :: pi_inf_L, pi_inf_R
+      |                                         1
+Warning: Unused PRIVATE module variable 'pi_inf_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:56:29:
+
+   56 |     real(kind(0d0)) :: pres_L, pres_R
+      |                             1
+Warning: Unused PRIVATE module variable 'pres_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:56:37:
+
+   56 |     real(kind(0d0)) :: pres_L, pres_R
+      |                                     1
+Warning: Unused PRIVATE module variable 'pres_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:64:41:
+
+   64 |     real(kind(0d0)), dimension(2) :: Re_L, Re_R
+      |                                         1
+Warning: Unused PRIVATE module variable 're_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:64:47:
+
+   64 |     real(kind(0d0)), dimension(2) :: Re_L, Re_R
+      |                                               1
+Warning: Unused PRIVATE module variable 're_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:79:30:
+
+   79 |     real(kind(0d0)) :: rho_avg
+      |                              1
+Warning: Unused PRIVATE module variable 'rho_avg' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:54:28:
+
+   54 |     real(kind(0d0)) :: rho_L, rho_R
+      |                            1
+Warning: Unused PRIVATE module variable 'rho_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:54:35:
+
+   54 |     real(kind(0d0)) :: rho_L, rho_R
+      |                                   1
+Warning: Unused PRIVATE module variable 'rho_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:91:26:
+
+   91 |     real(kind(0d0)) :: s_L, s_R, s_S
+      |                          1
+Warning: Unused PRIVATE module variable 's_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:96:26:
+
+   96 |     real(kind(0d0)) :: s_M, s_P
+      |                          1
+Warning: Unused PRIVATE module variable 's_m' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:96:31:
+
+   96 |     real(kind(0d0)) :: s_M, s_P
+      |                               1
+Warning: Unused PRIVATE module variable 's_p' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:91:31:
+
+   91 |     real(kind(0d0)) :: s_L, s_R, s_S
+      |                               1
+Warning: Unused PRIVATE module variable 's_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:91:36:
+
+   91 |     real(kind(0d0)) :: s_L, s_R, s_S
+      |                                    1
+Warning: Unused PRIVATE module variable 's_s' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:65:57:
+
+   65 |     real(kind(0d0)), allocatable, dimension(:) :: tau_e_L, tau_e_R
+      |                                                         1
+Warning: Unused PRIVATE module variable 'tau_e_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:65:66:
+
+   65 |     real(kind(0d0)), allocatable, dimension(:) :: tau_e_L, tau_e_R
+      |                                                                  1
+Warning: Unused PRIVATE module variable 'tau_e_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:55:55:
+
+   55 |     real(kind(0d0)), allocatable, dimension(:) :: vel_L, vel_R
+      |                                                       1
+Warning: Unused PRIVATE module variable 'vel_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:55:62:
+
+   55 |     real(kind(0d0)), allocatable, dimension(:) :: vel_L, vel_R
+      |                                                              1
+Warning: Unused PRIVATE module variable 'vel_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:103:27:
+
+  103 |     real(kind(0d0)) :: xi_L, xi_R
+      |                           1
+Warning: Unused PRIVATE module variable 'xi_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:101:27:
+
+  101 |     real(kind(0d0)) :: xi_M, xi_P
+      |                           1
+Warning: Unused PRIVATE module variable 'xi_m' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:101:33:
+
+  101 |     real(kind(0d0)) :: xi_M, xi_P
+      |                                 1
+Warning: Unused PRIVATE module variable 'xi_p' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:103:33:
+
+  103 |     real(kind(0d0)) :: xi_L, xi_R
+      |                                 1
+Warning: Unused PRIVATE module variable 'xi_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:60:26:
+
+   60 |     real(kind(0d0)) :: Y_L, Y_R
+      |                          1
+Warning: Unused PRIVATE module variable 'y_l' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:60:31:
+
+   60 |     real(kind(0d0)) :: Y_L, Y_R
+      |                               1
+Warning: Unused PRIVATE module variable 'y_r' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:1083:20:
+
+ 1083 |         integer :: i
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:1019:53:
+
+ 1019 |                                          norm_dir, ix, iy)
+      |                                                     1
+Warning: Unused dummy argument 'ix' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:1019:57:
+
+ 1019 |                                          norm_dir, ix, iy)
+      |                                                         1
+Warning: Unused dummy argument 'iy' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:1029:29:
+
+ 1029 |         integer :: i, j, k, l !< Generic loop iterators
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:91:27:
+
+   91 |     real(kind(0d0)) :: test
+      |                           1
+Warning: Unused PRIVATE module variable 'test' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:792:57:
+
+  792 |                                                        ix, iy)
+      |                                                         1
+Warning: Unused dummy argument 'ix' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:792:61:
+
+  792 |                                                        ix, iy)
+      |                                                             1
+Warning: Unused dummy argument 'iy' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:816:29:
+
+  816 |         integer :: i, j, k, l !< Generic loop iterators
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:784:52:
+
+  784 |     subroutine s_compute_viscous_source_flux(velL_vf, & ! -------------
+      |                                                    1
+Warning: Unused dummy argument 'vell_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:787:62:
+
+  787 |                                                        velR_vf, &
+      |                                                              1
+Warning: Unused dummy argument 'velr_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:620:20:
+
+  620 |         integer :: i, j
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:620:23:
+
+  620 |         integer :: i, j
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:574:20:
+
+  574 |         integer :: i, j, k, l
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:567:41:
+
+  567 |                                  norm_dir, weno_dir)
+      |                                         1
+Warning: Unused dummy argument 'norm_dir' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:383:45:
+
+  383 |         real(kind(0d0)), pointer :: beta_p(:)
+      |                                             1
+Warning: Unused variable 'beta_p' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:387:40:
+
+  387 |         integer :: t1, t2, c_rate, c_max
+      |                                        1
+Warning: Unused variable 'c_max' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:387:33:
+
+  387 |         integer :: t1, t2, c_rate, c_max
+      |                                 1
+Warning: Unused variable 'c_rate' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:390:23:
+
+  390 |         integer :: is1b, is2b, is1e, is2e
+      |                       1
+Warning: Unused variable 'is1b' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:390:35:
+
+  390 |         integer :: is1b, is2b, is1e, is2e
+      |                                   1
+Warning: Unused variable 'is1e' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:390:29:
+
+  390 |         integer :: is1b, is2b, is1e, is2e
+      |                             1
+Warning: Unused variable 'is2b' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:390:41:
+
+  390 |         integer :: is1b, is2b, is1e, is2e
+      |                                         1
+Warning: Unused variable 'is2e' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:385:29:
+
+  385 |         integer :: i, j, k, r, s, w
+      |                             1
+Warning: Unused variable 'r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:385:32:
+
+  385 |         integer :: i, j, k, r, s, w
+      |                                1
+Warning: Unused variable 's' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:387:21:
+
+  387 |         integer :: t1, t2, c_rate, c_max
+      |                     1
+Warning: Unused variable 't1' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:387:25:
+
+  387 |         integer :: t1, t2, c_rate, c_max
+      |                         1
+Warning: Unused variable 't2' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:385:35:
+
+  385 |         integer :: i, j, k, r, s, w
+      |                                   1
+Warning: Unused variable 'w' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:724:15:
+
+  724 |         flux_vf, flux_src_vf, &
+      |               1
+Warning: Unused dummy argument 'flux_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:725:20:
+
+  725 |         norm_dir, ix, iy)
+      |                    1
+Warning: Unused dummy argument 'ix' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:725:24:
+
+  725 |         norm_dir, ix, iy)
+      |                        1
+Warning: Unused dummy argument 'iy' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:737:29:
+
+  737 |         integer :: i, j, k, l ! Generic loop iterators
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:723:17:
+
+  723 |         q_prim_vf, &
+      |                 1
+Warning: Unused dummy argument 'q_prim_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:549:29:
+
+  549 |         integer :: i, j, k, l !< Generic loop iterator
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:531:18:
+
+  531 |         qL_prim_vf, &
+      |                  1
+Warning: Unused dummy argument 'ql_prim_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:534:18:
+
+  534 |         qR_prim_vf, &
+      |                  1
+Warning: Unused dummy argument 'qr_prim_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:159:57:
+
+  159 |         real(kind(0d0)), dimension(num_fluids) :: alpha_L, alpha_R
+      |                                                         1
+Warning: Unused variable 'alpha_l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:159:66:
+
+  159 |         real(kind(0d0)), dimension(num_fluids) :: alpha_L, alpha_R
+      |                                                                  1
+Warning: Unused variable 'alpha_r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:153:61:
+
+  153 |         real(kind(0d0)), dimension(num_fluids) :: alpha_rho_L, alpha_rho_R
+      |                                                             1
+Warning: Unused variable 'alpha_rho_l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:153:74:
+
+  153 |         real(kind(0d0)), dimension(num_fluids) :: alpha_rho_L, alpha_rho_R
+      |                                                                          1
+Warning: Unused variable 'alpha_rho_r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:180:34:
+
+  180 |         real(kind(0d0)) :: blkmod1, blkmod2
+      |                                  1
+Warning: Unused variable 'blkmod1' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:180:43:
+
+  180 |         real(kind(0d0)) :: blkmod1, blkmod2
+      |                                           1
+Warning: Unused variable 'blkmod2' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:183:29:
+
+  183 |         integer :: i, j, k, l, q !< Generic loop iterators
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:181:49:
+
+  181 |         real(kind(0d0)) :: pres_SL, pres_SR, Ms_L, Ms_R
+      |                                                 1
+Warning: Unused variable 'ms_l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:181:55:
+
+  181 |         real(kind(0d0)) :: pres_SL, pres_SR, Ms_L, Ms_R
+      |                                                       1
+Warning: Unused variable 'ms_r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:175:36:
+
+  175 |         real(kind(0d0)) :: PbwR3Lbar, Pbwr3Rbar
+      |                                    1
+Warning: Unused variable 'pbwr3lbar' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:175:47:
+
+  175 |         real(kind(0d0)) :: PbwR3Lbar, Pbwr3Rbar
+      |                                               1
+Warning: Unused variable 'pbwr3rbar' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:181:34:
+
+  181 |         real(kind(0d0)) :: pres_SL, pres_SR, Ms_L, Ms_R
+      |                                  1
+Warning: Unused variable 'pres_sl' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:181:43:
+
+  181 |         real(kind(0d0)) :: pres_SL, pres_SR, Ms_L, Ms_R
+      |                                           1
+Warning: Unused variable 'pres_sr' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:176:33:
+
+  176 |         real(kind(0d0)) :: R3Lbar, R3Rbar
+      |                                 1
+Warning: Unused variable 'r3lbar' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:176:41:
+
+  176 |         real(kind(0d0)) :: R3Lbar, R3Rbar
+      |                                         1
+Warning: Unused variable 'r3rbar' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:177:35:
+
+  177 |         real(kind(0d0)) :: R3V2Lbar, R3V2Rbar
+      |                                   1
+Warning: Unused variable 'r3v2lbar' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:177:45:
+
+  177 |         real(kind(0d0)) :: R3V2Lbar, R3V2Rbar
+      |                                             1
+Warning: Unused variable 'r3v2rbar' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:160:30:
+
+  160 |         real(kind(0d0)) :: Y_L, Y_R
+      |                              1
+Warning: Unused variable 'y_l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_riemann_solvers.fpp:160:35:
+
+  160 |         real(kind(0d0)) :: Y_L, Y_R
+      |                                   1
+Warning: Unused variable 'y_r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:107:20:
+
+  107 |         integer :: i, j
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_weno.fpp:107:23:
+
+  107 |         integer :: i, j
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:57:62:
+
+   57 |     type(scalar_field), allocatable, dimension(:) :: grad_x_vf, grad_y_vf, norm_vf
+      |                                                              1
+Warning: Unused PRIVATE module variable 'grad_x_vf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:57:73:
+
+   57 |     type(scalar_field), allocatable, dimension(:) :: grad_x_vf, grad_y_vf, norm_vf
+      |                                                                         1
+Warning: Unused PRIVATE module variable 'grad_y_vf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:57:82:
+
+   57 |     type(scalar_field), allocatable, dimension(:) :: grad_x_vf, grad_y_vf, norm_vf
+      |                                                                                  1
+Warning: Unused PRIVATE module variable 'norm_vf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:680:20:
+
+  680 |         integer :: i !< Generic loop interator
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:668:20:
+
+  668 |         integer :: i !< Generic loop iterator
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:666:35:
+
+  666 |         type(int_bounds_info) :: ix, iy, iz
+      |                                   1
+Warning: Unused variable 'ix' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:666:39:
+
+  666 |         type(int_bounds_info) :: ix, iy, iz
+      |                                       1
+Warning: Unused variable 'iy' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_start_up.fpp:666:43:
+
+  666 |         type(int_bounds_info) :: ix, iy, iz
+      |                                           1
+Warning: Unused variable 'iz' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:78:31:
+
+   78 |     real(kind(0d0)) :: ccfl_max !< CCFL criterion maximum
+      |                               1
+Warning: Unused PRIVATE module variable 'ccfl_max' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:62:60:
+
+   62 |     real(kind(0d0)), allocatable, dimension(:, :) :: ccfl_sf  !< CCFL stability criterion
+      |                                                            1
+Warning: Unused PRIVATE module variable 'ccfl_sf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:788:20:
+
+  788 |         integer :: i !< Generic loop iterator
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:755:20:
+
+  755 |         integer :: i !< Generic loop iterator
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:753:35:
+
+  753 |         type(int_bounds_info) :: ix, iy, iz
+      |                                   1
+Warning: Unused variable 'ix' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:753:39:
+
+  753 |         type(int_bounds_info) :: ix, iy, iz
+      |                                       1
+Warning: Unused variable 'iy' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:753:43:
+
+  753 |         type(int_bounds_info) :: ix, iy, iz
+      |                                           1
+Warning: Unused variable 'iz' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:580:55:
+
+  580 |         real(kind(0d0)), dimension(num_fluids) :: alpha
+      |                                                       1
+Warning: Unused variable 'alpha' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:593:34:
+
+  593 |         real(kind(0d0)) :: blkmod1, blkmod2 !<
+      |                                  1
+Warning: Unused variable 'blkmod1' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:593:43:
+
+  593 |         real(kind(0d0)) :: blkmod1, blkmod2 !<
+      |                                           1
+Warning: Unused variable 'blkmod2' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:352:30:
+
+  352 |         integer :: i, j, k, ii !< Generic loop iterators
+      |                              1
+Warning: Unused variable 'ii' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:202:34:
+
+  202 |         real(kind(0d0)) :: blkmod1, blkmod2 !<
+      |                                  1
+Warning: Unused variable 'blkmod1' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:202:43:
+
+  202 |         real(kind(0d0)) :: blkmod1, blkmod2 !<
+      |                                           1
+Warning: Unused variable 'blkmod2' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_data_output.fpp:207:22:
+
+  207 |         integer :: Nfq
+      |                      1
+Warning: Unused variable 'nfq' declared at (1) [-Wunused-variable]
+[ 82%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_viscous.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_viscous.fpp:186:29:
+
+  186 |         integer :: i, j, k, r !< Generic loop iterators
+      |                             1
+Warning: Unused variable 'r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_viscous.fpp:53:62:
+
+   53 |     subroutine s_compute_fd_gradient(var, grad_x, grad_y, norm, ix, iy)
+      |                                                              1
+Warning: Unused dummy argument 'norm' at (1) [-Wunused-dummy-argument]
+[ 86%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_rhs.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:139:33:
+
+  139 |     type(scalar_field) :: alf_sum
+      |                                 1
+Warning: Unused PRIVATE module variable 'alf_sum' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:142:80:
+
+  142 |     real(kind(0d0)), allocatable, dimension(:, :, :) :: blkmod1, blkmod2, alpha1, alpha2
+      |                                                                                1
+Warning: Unused PRIVATE module variable 'alpha1' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:142:88:
+
+  142 |     real(kind(0d0)), allocatable, dimension(:, :, :) :: blkmod1, blkmod2, alpha1, alpha2
+      |                                                                                        1
+Warning: Unused PRIVATE module variable 'alpha2' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:142:63:
+
+  142 |     real(kind(0d0)), allocatable, dimension(:, :, :) :: blkmod1, blkmod2, alpha1, alpha2
+      |                                                               1
+Warning: Unused PRIVATE module variable 'blkmod1' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:142:72:
+
+  142 |     real(kind(0d0)), allocatable, dimension(:, :, :) :: blkmod1, blkmod2, alpha1, alpha2
+      |                                                                        1
+Warning: Unused PRIVATE module variable 'blkmod2' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:154:30:
+
+  154 |     character(50) :: file_path !< Local file path for saving debug files
+      |                              1
+Warning: Unused PRIVATE module variable 'file_path' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:120:62:
+
+  120 |     type(scalar_field), allocatable, dimension(:) :: tau_Re_vf
+      |                                                              1
+Warning: Unused PRIVATE module variable 'tau_re_vf' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:1019:26:
+
+ 1019 |         integer :: i, j, k, l !< Generic loop iterators
+      |                          1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:988:20:
+
+  988 |         integer :: i, j, k
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:988:23:
+
+  988 |         integer :: i, j, k
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:988:26:
+
+  988 |         integer :: i, j, k
+      |                          1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:749:32:
+
+  749 |         integer :: i, j, l, k, r !< Generic loop iterators
+      |                                1
+Warning: Unused variable 'r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:472:39:
+
+  472 |         integer :: i, j, k, l, r, q, ii, id !< Generic loop iterators
+      |                                       1
+Warning: Unused variable 'ii' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:472:32:
+
+  472 |         integer :: i, j, k, l, r, q, ii, id !< Generic loop iterators
+      |                                1
+Warning: Unused variable 'r' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_rhs.fpp:174:26:
+
+  174 |         integer :: i, j, k, l !< Generic loop iterators
+      |                          1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+[ 89%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/m_time_steppers.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_time_steppers.fpp:203:29:
+
+  203 |         integer :: i, j, k, l !< Generic loop iterator
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_time_steppers.fpp:135:29:
+
+  135 |         integer :: i, j, k, l !< Generic loop iterator
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_time_steppers.fpp:55:43:
+
+   55 |         type(int_bounds_info) :: ix, iy, iz !<
+      |                                           1
+Warning: Unused variable 'iz' declared at (1) [-Wunused-variable]
+[ 93%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/m_derived_variables.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_derived_variables.f90:91:20:
+
+   91 |         integer :: i, j !< Generic loop iterators
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/m_derived_variables.f90:91:23:
+
+   91 |         integer :: i, j !< Generic loop iterators
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+[ 96%] Building Fortran object CMakeFiles/simulation.dir/src/simulation/autogen/p_main.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/simulation/p_main.fpp:57:23:
+
+   57 |     integer :: err_code, ierr
+      |                       1
+Warning: Unused variable 'err_code' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/p_main.fpp:57:29:
+
+   57 |     integer :: err_code, ierr
+      |                             1
+Warning: Unused variable 'ierr' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/simulation/p_main.fpp:59:33:
+
+   59 |     integer :: t_step, i, j, k, l !< Iterator for the time-stepping loop
+      |                                 1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+[100%] Linking Fortran executable simulation
+[100%] Built target simulation
+
+  $ cmake --install /Users/spencer/Downloads/test/MicroFC/build/simulation
+
+-- Install configuration: "Debug"
+-- Installing: /Users/spencer/Downloads/test/MicroFC/build/install/bin/simulation
+
+Building post_process:
+  Building silo:
+    Building hdf5:
+
+      $ cmake -DMFC_HDF5=ON -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug 
+-DCMAKE_PREFIX_PATH=/Users/spencer/Downloads/test/MicroFC/build/install -DCMAKE_FIND_ROOT_PATH=/Users/spencer/Downloads/test/MicroFC/build/install 
+-DCMAKE_INSTALL_PREFIX=/Users/spencer/Downloads/test/MicroFC/build/install -S /Users/spencer/Downloads/test/MicroFC/toolchain/dependencies -B 
+/Users/spencer/Downloads/test/MicroFC/build/hdf5
+
+-- The Fortran compiler identification is GNU 12.2.0
+-- Checking whether Fortran compiler has -isysroot
+-- Checking whether Fortran compiler has -isysroot - yes
+-- Checking whether Fortran compiler supports OSX deployment target flag
+-- Checking whether Fortran compiler supports OSX deployment target flag - yes
+-- Detecting Fortran compiler ABI info
+-- Detecting Fortran compiler ABI info - done
+-- Check for working Fortran compiler: /opt/homebrew/bin/gfortran - skipped
+-- The C compiler identification is AppleClang 14.0.0.14000029
+-- The CXX compiler identification is AppleClang 14.0.0.14000029
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /Library/Developer/CommandLineTools/usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_EXPORT_COMPILE_COMMANDS
+
+
+-- Build files have been written to: /Users/spencer/Downloads/test/MicroFC/build/hdf5
+
+      $ cmake --build /Users/spencer/Downloads/test/MicroFC/build/hdf5 --target hdf5 -j 8 --config Debug
+
+[ 12%] Creating directories for 'hdf5'
+[ 25%] Performing download step (git clone) for 'hdf5'
+[100%] Completed 'silo'
+[100%] Built target silo
+
+    $ cmake --install /Users/spencer/Downloads/test/MicroFC/build/silo
+
+-- Install configuration: "Debug"
+
+
+  $ cmake -DMFC_POST_PROCESS=ON -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug 
+-DCMAKE_PREFIX_PATH=/Users/spencer/Downloads/test/MicroFC/build/install -DCMAKE_FIND_ROOT_PATH=/Users/spencer/Downloads/test/MicroFC/build/install 
+-DCMAKE_INSTALL_PREFIX=/Users/spencer/Downloads/test/MicroFC/build/install -DMFC_MPI=ON -DMFC_OpenACC=OFF -S /Users/spencer/Downloads/test/MicroFC/ -B 
+/Users/spencer/Downloads/test/MicroFC/build/post_process
+
+-- The C compiler identification is AppleClang 14.0.0.14000029
+-- The Fortran compiler identification is GNU 12.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Checking whether Fortran compiler has -isysroot
+-- Checking whether Fortran compiler has -isysroot - yes
+-- Checking whether Fortran compiler supports OSX deployment target flag
+-- Checking whether Fortran compiler supports OSX deployment target flag - yes
+-- Detecting Fortran compiler ABI info
+-- Detecting Fortran compiler ABI info - done
+-- Check for working Fortran compiler: /opt/homebrew/bin/gfortran - skipped
+-- Found SILO: /Users/spencer/Downloads/test/MicroFC/build/install/lib/libsiloh5.a  
+-- Found HDF5: /Users/spencer/Downloads/test/MicroFC/build/install/lib/libhdf5.a  
+-- Found MPI_Fortran: /opt/homebrew/Cellar/open-mpi/4.1.4_2/lib/libmpi_usempif08.dylib (found version "3.1") 
+-- Found MPI: TRUE (found version "3.1") found components: Fortran 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/spencer/Downloads/test/MicroFC/build/post_process
+
+  $ cmake --build /Users/spencer/Downloads/test/MicroFC/build/post_process --target post_process -j 8 --config Debug
+
+[ 13%] Building Fortran object CMakeFiles/post_process.dir/src/common/m_derived_types.f90.o
+[ 13%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/autogen/macros.fpp.f90.o
+[ 20%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/m_global_parameters.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_global_parameters.f90:247:25:
+
+  247 |         integer :: i, fac
+      |                         1
+Warning: Unused variable 'fac' declared at (1) [-Wunused-variable]
+[ 26%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/autogen/m_mpi_proxy.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_mpi_proxy.fpp:42:32:
+
+   42 |     integer, private :: err_code, ierr
+      |                                1
+Warning: Unused PRIVATE module variable 'err_code' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_mpi_proxy.fpp:280:23:
+
+  280 |         integer :: i, j
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+[ 33%] Building Fortran object CMakeFiles/post_process.dir/src/common/m_compile_specific.f90.o
+[ 40%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/m_derived_variables.f90.o
+[ 46%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/autogen/m_variables_conversion.fpp.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_derived_variables.f90:242:38:
+
+  242 |         real(kind(0d0)) :: alpha_unadv !< Unadvected volume fraction
+      |                                      1
+Warning: Unused variable 'alpha_unadv' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_derived_variables.f90:233:52:
+
+  233 |         real(kind(0d0)) :: drho_dx, drho_dy, drho_dz !<
+      |                                                    1
+Warning: Unused variable 'drho_dz' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_derived_variables.f90:244:29:
+
+  244 |         integer :: i, j, k, l !< Generic loop iterators
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_derived_variables.f90:173:26:
+
+  173 |         integer :: j, k, l, r !< Generic loop iterators
+      |                          1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:78:56:
+
+   78 |     real(kind(0d0)), allocatable, dimension(:, :) :: Res
+      |                                                        1
+Warning: Unused PRIVATE module variable 'res' declared at (1) [-Wunused-value]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:524:57:
+
+  524 |                     alpha_rho_K(i) = qK_prim_vf(j, k, i)
+      |                                                         1
+Warning: Unused variable 'alpha_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:523:61:
+
+  523 |                 do i = 1, contxe
+      |                                                             1
+Warning: Unused variable 'alpha_rho_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:529:30:
+
+  529 |                     alpha_K(i - E_idx) = qK_prim_vf(j, k, i)
+      |                              1
+Warning: Unused variable 'e_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:510:62:
+
+  510 |         is1b = is1%beg; is1e = is1%end
+      |                                                              1
+Warning: Unused dummy argument 'fk_src_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:509:58:
+
+  509 | 
+      |                                                          1
+Warning: Unused dummy argument 'fk_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:530:34:
+
+  530 |                 end do
+      |                                  1
+Warning: Unused variable 'gamma_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:534:20:
+
+  534 |                 end do
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:534:23:
+
+  534 |                 end do
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:534:26:
+
+  534 |                 end do
+      |                          1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:534:29:
+
+  534 |                 end do
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:531:35:
+
+  531 | !$acc loop seq
+      |                                   1
+Warning: Unused variable 'pi_inf_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:528:33:
+
+  528 |                 do i = advxb, advxe
+      |                                 1
+Warning: Unused variable 'pres_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:508:63:
+
+  508 |         integer :: i, j, k, l !< Generic loop iterators
+      |                                                               1
+Warning: Unused dummy argument 'qk_prim_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:532:45:
+
+  532 |                 do i = 1, num_dims
+      |                                             1
+Warning: Unused variable 're_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:525:32:
+
+  525 |                 end do
+      |                                1
+Warning: Unused variable 'rho_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:526:53:
+
+  526 | 
+      |                                                     1
+Warning: Unused variable 'vel_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:527:36:
+
+  527 | !$acc loop seq
+      |                                    1
+Warning: Unused variable 'vel_k_sum' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:448:29:
+
+  448 |                 end do
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:448:32:
+
+  448 |                 end do
+      |                                1
+Warning: Unused variable 'q' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:352:73:
+
+  352 |                     alpha_rho_K(i) = qK_cons_vf(i)%sf(j, k)
+      |                                                                         1
+Warning: Unused dummy argument 'gm_alphak_vf' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:353:63:
+
+  353 |                     alpha_K(i) = qK_cons_vf(advxb + i - 1)%sf(j, k)
+      |                                                               1
+Warning: Unused dummy argument 'ix' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:353:67:
+
+  353 |                     alpha_K(i) = qK_cons_vf(advxb + i - 1)%sf(j, k)
+      |                                                                   1
+Warning: Unused dummy argument 'iy' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:369:29:
+
+  369 | 
+      |                             1
+Warning: Unused variable 'l' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:365:45:
+
+  365 |                 ! If pre-processing, use non acc mixture subroutines
+      |                                             1
+Warning: Unused variable 're_k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:242:23:
+
+  242 |         integer :: i, j
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:189:65:
+
+  189 |                                                           alpha_K, alpha_rho_K, Re_K, k, l )
+      |                                                                 1
+Warning: Unused dummy argument 'alpha_k' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:200:38:
+
+  200 |         real(kind(0d0)) :: alpha_K_sum
+      |                                      1
+Warning: Unused variable 'alpha_k_sum' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:189:78:
+
+  189 |                                                           alpha_K, alpha_rho_K, Re_K, k, l )
+      |                                                                              1
+Warning: Unused dummy argument 'alpha_rho_k' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:188:65:
+
+  188 |                                                           gamma_K, pi_inf_K, &
+      |                                                                 1
+Warning: Dummy argument 'gamma_k' at (1) was declared INTENT(OUT) but was not set [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:199:20:
+
+  199 |         integer :: i, j !< Generic loop iterators
+      |                    1
+Warning: Unused variable 'i' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:199:23:
+
+  199 |         integer :: i, j !< Generic loop iterators
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:189:87:
+
+  189 |                                                           alpha_K, alpha_rho_K, Re_K, k, l )
+      |                                                                                       1
+Warning: Unused dummy argument 'k' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:189:90:
+
+  189 |                                                           alpha_K, alpha_rho_K, Re_K, k, l )
+      |                                                                                          1
+Warning: Unused dummy argument 'l' at (1) [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:188:75:
+
+  188 |                                                           gamma_K, pi_inf_K, &
+      |                                                                           1
+Warning: Dummy argument 'pi_inf_k' at (1) was declared INTENT(OUT) but was not set [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:189:84:
+
+  189 |                                                           alpha_K, alpha_rho_K, Re_K, k, l )
+      |                                                                                    1
+Warning: Dummy argument 're_k' at (1) was declared INTENT(OUT) but was not set [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:187:63:
+
+  187 |     subroutine s_convert_species_to_mixture_variables_acc(rho_K, &
+      |                                                               1
+Warning: Dummy argument 'rho_k' at (1) was declared INTENT(OUT) but was not set [-Wunused-dummy-argument]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:125:23:
+
+  125 |         integer :: i, j !< Generic loop iterator
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/common/m_variables_conversion.fpp:110:90:
+
+  110 |     subroutine s_convert_species_to_mixture_variables(q_vf, k, l, rho, gamma, pi_inf, Re_K)
+      |                                                                                          1
+Warning: Dummy argument 're_k' at (1) was declared INTENT(OUT) but was not set [-Wunused-dummy-argument]
+[ 60%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/m_data_input.f90.o
+[ 60%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/m_data_output.f90.o
+[ 66%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/m_start_up.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_output.f90:513:54:
+
+  513 |             err = DBADDIOPT(optlist, DBOPT_LO_OFFSET, lo_offset)
+      |                                                      1
+......
+  676 |                     err = DBADDIOPT(optlist, DBOPT_EXTENTS_SIZE, 2)
+      |                                                                 2
+Warning: Rank mismatch between actual argument at (1) and actual argument at (2) (scalar and rank-1)
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_output.f90:514:54:
+
+  514 |             err = DBADDIOPT(optlist, DBOPT_HI_OFFSET, hi_offset)
+      |                                                      1
+......
+  676 |                     err = DBADDIOPT(optlist, DBOPT_EXTENTS_SIZE, 2)
+      |                                                                 2
+Warning: Rank mismatch between actual argument at (1) and actual argument at (2) (scalar and rank-1)
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_output.f90:606:40:
+
+  606 |         real(kind(0d0)) :: start, finish
+      |                                        1
+Warning: Unused variable 'finish' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_output.f90:605:23:
+
+  605 |         integer :: i, j, k
+      |                       1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_output.f90:605:26:
+
+  605 |         integer :: i, j, k
+      |                          1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_output.f90:606:32:
+
+  606 |         real(kind(0d0)) :: start, finish
+      |                                1
+Warning: Unused variable 'start' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_input.f90:481:26:
+
+  481 |         integer :: i, j, k !< Generic loop iterators
+      |                          1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_input.f90:199:40:
+
+  199 |         real(kind(0d0)) :: start, finish
+      |                                        1
+Warning: Unused variable 'finish' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/m_data_input.f90:199:32:
+
+  199 |         real(kind(0d0)) :: start, finish
+      |                                1
+Warning: Unused variable 'start' declared at (1) [-Wunused-variable]
+[ 73%] Building Fortran object CMakeFiles/post_process.dir/src/post_process/p_main.f90.o
+/Users/spencer/Downloads/test/MicroFC/src/post_process/p_main.f90:48:19:
+
+   48 |     integer :: i, j, k
+      |                   1
+Warning: Unused variable 'j' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/p_main.f90:48:22:
+
+   48 |     integer :: i, j, k
+      |                      1
+Warning: Unused variable 'k' declared at (1) [-Wunused-variable]
+/Users/spencer/Downloads/test/MicroFC/src/post_process/p_main.f90:51:35:
+
+   51 |     real(kind(0d0)) :: total_volume !<
+      |                                   1
+Warning: Unused variable 'total_volume' declared at (1) [-Wunused-variable]
+[ 80%] Linking Fortran executable post_process
+[100%] Built target post_process
+
+  $ cmake --install /Users/spencer/Downloads/test/MicroFC/build/post_process
+
+-- Install configuration: "Debug"
+-- Installing: /Users/spencer/Downloads/test/MicroFC/build/install/bin/post_process
+
+mfc: (venv) Exiting the Python virtual environment.

@@ -43,9 +43,6 @@ module m_weno
         real(kind(0d0)), allocatable, dimension(:, :, :) :: v_rs_ws_x, v_rs_ws_y
     !> @}
 
-
-
-
     ! WENO Coefficients ========================================================
 
     !> @name Polynomial coefficients at the left and right cell-boundaries (CB) and at
@@ -59,10 +56,6 @@ module m_weno
 
     real(kind(0d0)), target, allocatable, dimension(:, :, :) :: poly_coef_cbR_x
     real(kind(0d0)), target, allocatable, dimension(:, :, :) :: poly_coef_cbR_y
-    real(kind(0d0)), pointer, dimension(:, :, :) :: poly_coef_L
-    real(kind(0d0)), pointer, dimension(:, :, :) :: poly_coef_R
-!    real(kind(0d0)), pointer, dimension(:, :, :) :: poly_coef_L => null()
-!    real(kind(0d0)), pointer, dimension(:, :, :) :: poly_coef_R => null()
     !> @}
 
     !> @name The ideal weights at the left and the right cell-boundaries and at the
@@ -75,11 +68,6 @@ module m_weno
 
     real(kind(0d0)), target, allocatable, dimension(:, :) :: d_cbR_x
     real(kind(0d0)), target, allocatable, dimension(:, :) :: d_cbR_y
-
-    real(kind(0d0)), pointer, dimension(:, :) :: d_L
-    real(kind(0d0)), pointer, dimension(:, :) :: d_R
-!    real(kind(0d0)), pointer, dimension(:, :) :: d_L => null()
-!    real(kind(0d0)), pointer, dimension(:, :) :: d_R => null()
     !> @}
 
     !> @name Smoothness indicator coefficients in the x-, y-, and z-directions. Note
@@ -89,9 +77,6 @@ module m_weno
     !> @{
     real(kind(0d0)), target, allocatable, dimension(:, :, :) :: beta_coef_x
     real(kind(0d0)), target, allocatable, dimension(:, :, :) :: beta_coef_y
-
-    real(kind(0d0)), pointer, dimension(:, :, :) :: beta_coef
-!    real(kind(0d0)), pointer, dimension(:, :, :) :: beta_coef => null()
     !> @}
 
     ! END: WENO Coefficients ===================================================
@@ -414,8 +399,6 @@ contains
                                    norm_dir, weno_dir)
         end if
 
-        call cpu_time(start)
-
         if (weno_order == 1) then
             if (weno_dir == 1) then
 !$acc parallel loop collapse(4) default(present)
@@ -588,7 +571,7 @@ contains
         integer, intent(IN) :: norm_dir
         integer, intent(IN) :: weno_dir
 
-        integer :: i, j, k 
+        integer :: i, j, k, l
 
         ! Determining the number of cell-average variables which will be
         ! WENO-reconstructed and mapping their indical bounds in the x-,
