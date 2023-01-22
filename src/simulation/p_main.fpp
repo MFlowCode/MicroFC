@@ -54,6 +54,7 @@ program p_main
 
     implicit none
 
+    integer :: ierr
     integer :: t_step, i, j, k !< Iterator for the time-stepping loop
     real(kind(0d0)) :: time_avg, time_final
     real(kind(0d0)) :: io_time_avg, io_time_final
