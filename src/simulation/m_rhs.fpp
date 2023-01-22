@@ -422,7 +422,7 @@ contains
         !$acc update device(ix, iy)
 
         ! Association/Population of Working Variables ======================
-        !$acc parallel loop collapse(4) gang vector default(present)
+        !$acc parallel loop collapse(3) gang vector default(present)
         do i = 1, sys_size
                 do k = iy%beg, iy%end
                     do j = ix%beg, ix%end
@@ -564,7 +564,7 @@ contains
             call nvtxStartRange("RHS_Flux_Add")
             if (id == 1) then
 
-                !$acc parallel loop collapse(4) gang vector default(present)
+                !$acc parallel loop collapse(3) gang vector default(present)
                 do j = 1, sys_size
                         do l = 0, n
                             do k = 0, m
@@ -575,7 +575,7 @@ contains
                         end do
                 end do
 
-                !$acc parallel loop collapse(4) gang vector default(present)
+                !$acc parallel loop collapse(3) gang vector default(present)
                 do j = advxb, advxe
                         do l = 0, n
                             do k = 0, m
@@ -589,7 +589,7 @@ contains
                 end do
 
                 if (any(Re_size > 0)) then
-!$acc parallel loop collapse(3) gang vector default(present)
+!$acc parallel loop collapse(2) gang vector default(present)
                         do k = 0, n
                             do j = 0, m
                                 !$acc loop seq
@@ -607,7 +607,7 @@ contains
                 ! RHS Contribution in y-direction ===============================
                 ! Applying the Riemann fluxes
 
-                !$acc parallel loop collapse(4) gang vector default(present)
+                !$acc parallel loop collapse(3) gang vector default(present)
                 do j = 1, sys_size
                         do k = 0, n
                             do q = 0, m
@@ -621,7 +621,7 @@ contains
                 ! Applying source terms to the RHS of the advection equations
 
 
-                !$acc parallel loop collapse(4) gang vector default(present)
+                !$acc parallel loop collapse(3) gang vector default(present)
                 do j = advxb, advxe
                     do k = 0, n
                         do q = 0, m
@@ -637,7 +637,7 @@ contains
 
 
                 if (any(Re_size > 0)) then
-                    !$acc parallel loop collapse(3) gang vector default(present)
+                    !$acc parallel loop collapse(2) gang vector default(present)
                     do k = 0, n
                         do j = 0, m
                             !$acc loop seq
@@ -663,7 +663,7 @@ contains
             ix%end = m - ix%beg; iy%end = n - iy%beg
             !$acc update device(ix, iy)
 
-            !$acc parallel loop collapse(4) gang vector default(present)
+            !$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do k = iy%beg, iy%end
                         do j = ix%beg, ix%end
@@ -691,7 +691,7 @@ contains
 
         if (bc_x%beg <= -3) then         ! Ghost-cell extrap. BC at beginning
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do k = 0, n
                         do j = 1, buff_size
@@ -703,7 +703,7 @@ contains
 
         elseif (bc_x%beg == -2) then     ! Symmetry BC at beginning
 
-!$acc parallel loop collapse(3) gang vector default(present)
+!$acc parallel loop collapse(2) gang vector default(present)
                 do k = 0, n
                     do j = 1, buff_size
 !$acc loop seq
@@ -724,7 +724,7 @@ contains
 
         elseif (bc_x%beg == -1) then     ! Periodic BC at beginning
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do k = 0, n
                         do j = 1, buff_size
@@ -743,7 +743,7 @@ contains
 
         if (bc_x%end <= -3) then         ! Ghost-cell extrap. BC at end
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do k = 0, n
                         do j = 1, buff_size
@@ -755,7 +755,7 @@ contains
 
         elseif (bc_x%end == -2) then     ! Symmetry BC at end
 
-!$acc parallel loop collapse(3) default(present)
+!$acc parallel loop collapse(2) default(present)
                 do k = 0, n
                     do j = 1, buff_size
 
@@ -779,7 +779,7 @@ contains
 
         elseif (bc_x%end == -1) then     ! Periodic BC at end
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do k = 0, n
                         do j = 1, buff_size
@@ -806,7 +806,7 @@ contains
 
         elseif (bc_y%beg <= -3 .and. bc_y%beg /= -13) then     ! Ghost-cell extrap. BC at beginning
 
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size
@@ -817,7 +817,7 @@ contains
             end do
 
         elseif (bc_y%beg == -2) then     ! Symmetry BC at beginning
-!$acc parallel loop collapse(3) gang vector default(present)
+!$acc parallel loop collapse(2) gang vector default(present)
                 do j = 1, buff_size
                     do l = -buff_size, m + buff_size
 !$acc loop seq
@@ -837,7 +837,7 @@ contains
                 end do
 
         elseif (bc_y%beg == -1) then     ! Periodic BC at beginning
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size
@@ -855,7 +855,7 @@ contains
         end if
 
         if (bc_y%end <= -3) then         ! Ghost-cell extrap. BC at end
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size
@@ -867,7 +867,7 @@ contains
 
         elseif (bc_y%end == -2) then     ! Symmetry BC at end
 
-!$acc parallel loop collapse(3) gang vector default(present)
+!$acc parallel loop collapse(2) gang vector default(present)
                 do j = 1, buff_size
                     do l = -buff_size, m + buff_size
 !$acc loop seq
@@ -887,7 +887,7 @@ contains
                 end do
 
         elseif (bc_y%end == -1) then     ! Periodic BC at end
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do i = 1, sys_size
                     do j = 1, buff_size
                         do l = -buff_size, m + buff_size

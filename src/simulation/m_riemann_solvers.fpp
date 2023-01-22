@@ -123,15 +123,14 @@ contains
             norm_dir, ix, iy)
 
         ! Reshaping inputted data based on dimensional splitting direction
-        call s_initialize_riemann_solver( flux_src_vf, norm_dir)
+        call s_initialize_riemann_solver(flux_src_vf, norm_dir)
 
         #:for NORM_DIR, XYZ in [(1, 'x'), (2, 'y')]
 
             if (norm_dir == ${NORM_DIR}$) then
 
-
-                !$acc parallel loop collapse(2) gang vector default(present) private(vel_L, vel_R, Re_L, Re_R, &
-                !$acc rho_avg, h_avg, gamma_avg, s_L, s_R, s_S, vel_avg_rms)
+                    !$acc parallel loop collapse(2) gang vector default(present) private(vel_L, vel_R, Re_L, Re_R, &
+                    !$acc rho_avg, H_avg, gamma_avg, s_L, s_R, s_S, vel_avg_rms)
                     do k = is2%beg, is2%end
                         do j = is1%beg, is1%end
                             idx1 = 1; if (dir_idx(1) == 2) idx1 = 2; if (dir_idx(1) == 3) idx1 = 3

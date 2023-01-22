@@ -390,7 +390,7 @@ contains
 
         if (weno_order == 1) then
             if (weno_dir == 1) then
-!$acc parallel loop collapse(4) default(present)
+!$acc parallel loop collapse(3) default(present)
                 do i = 1, ubound(v_vf, 1)
                         do k = is2%beg, is2%end
                             do j = is1%beg, is1%end
@@ -401,7 +401,7 @@ contains
                 end do
 !$acc end parallel loop
             else if (weno_dir == 2) then
-!$acc parallel loop collapse(4) default(present)
+!$acc parallel loop collapse(3) default(present)
                 do i = 1, ubound(v_vf, 1)
                         do k = is2%beg, is2%end
                             do j = is1%beg, is1%end
@@ -416,7 +416,7 @@ contains
         elseif (weno_order == 3) then
             #:for WENO_DIR, XYZ in [(1, 'x'), (2, 'y')]
             if (weno_dir == ${WENO_DIR}$) then
-!$acc parallel loop collapse(4) gang vector default(present) private(beta,dvd,poly,omega,alpha)
+!$acc parallel loop collapse(3) gang vector default(present) private(beta,dvd,poly,omega,alpha)
                         do k = is2%beg, is2%end
                             do j = is1%beg, is1%end
                                 do i = 1, v_size
@@ -467,10 +467,10 @@ contains
         else
             #:for WENO_DIR, XYZ in [(1, 'x'), (2, 'y')]
             if (weno_dir == ${WENO_DIR}$) then
-!$acc parallel loop gang vector collapse (3)  default(present) private(dvd, poly, beta, alpha, omega)
+                    !$acc parallel loop gang vector collapse (2)  default(present) private(dvd, poly, beta, alpha, omega)
                     do k = is2%beg, is2%end
                         do j = is1%beg, is1%end
-!$acc loop seq
+                            !$acc loop seq
                             do i = 1, v_size
 
                                 dvd(1) = v_rs_ws_${XYZ}$(j + 2, k, i) &
@@ -567,7 +567,7 @@ contains
         !$acc update device(v_size)
 
         if (weno_dir == 1) then
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do j = 1, v_size
                 do l = is2%beg, is2%end
                     do k = is1%beg - weno_polyn, is1%end + weno_polyn
@@ -584,7 +584,7 @@ contains
         if (n == 0) return
 
         if (weno_dir == 2) then
-!$acc parallel loop collapse(4) gang vector default(present)
+!$acc parallel loop collapse(3) gang vector default(present)
             do j = 1, v_size
                 do l = is2%beg, is2%end
                     do k = is1%beg - weno_polyn, is1%end + weno_polyn

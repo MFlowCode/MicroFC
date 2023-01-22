@@ -147,8 +147,6 @@ module m_global_parameters
     integer :: pi_inf_idx                !< Index of liquid stiffness func. eqn.
     !> @}
 
-!$acc declare create(bub_idx)
-
     !> @name The number of fluids, along with their identifying indexes, respectively,
     !! for which viscous effects, e.g. the shear and/or the volume Reynolds (Re)
     !! numbers, will be non-negligible.

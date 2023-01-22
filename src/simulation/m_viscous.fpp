@@ -98,7 +98,7 @@ module m_viscous
 
         !$acc update device(ix, iy)
 
-    !$acc parallel loop collapse(2) gang vector default(present)
+    !$acc parallel loop collapse(1) gang vector default(present)
             do k = iy%beg, iy%end
                 grad_x%sf(ix%beg, k) = &
                     (-3d0*var%sf(ix%beg, k) + 4d0*var%sf(ix%beg + 1, k) - var%sf(ix%beg + 2, k))/ &
@@ -108,7 +108,7 @@ module m_viscous
                     (x_cc(ix%end) - x_cc(ix%end - 2))
             end do
         if (n > 0) then
-    !$acc parallel loop collapse(2) gang vector default(present)
+    !$acc parallel loop collapse(1) gang vector default(present)
                 do j = ix%beg, ix%end
                     grad_y%sf(j, iy%beg) = &
                         (-3d0*var%sf(j, iy%beg) + 4d0*var%sf(j, iy%beg + 1) - var%sf(j, iy%beg + 2))/ &
@@ -120,14 +120,14 @@ module m_viscous
         end if
 
         if (bc_x%beg <= -3) then
-    !$acc parallel loop collapse(2) gang vector default(present)
+    !$acc parallel loop collapse(1) gang vector default(present)
                 do k = iy%beg, iy%end
                     grad_x%sf(0, k) = (-3d0*var%sf(0, k) + 4d0*var%sf(1, k) - var%sf(2, k))/ &
                                         (x_cc(2) - x_cc(0))
                 end do
         end if
         if (bc_x%end <= -3) then
-    !$acc parallel loop collapse(2) gang vector default(present)
+    !$acc parallel loop collapse(1) gang vector default(present)
                 do k = iy%beg, iy%end
                     grad_x%sf(m, k) = (3d0*var%sf(m, k) - 4d0*var%sf(m - 1, k) + var%sf(m - 2, k))/ &
                                         (x_cc(m) - x_cc(m - 2))
@@ -135,14 +135,14 @@ module m_viscous
         end if
         if (n > 0) then
             if (bc_y%beg <= -3 .and. bc_y%beg /= -13) then
-    !$acc parallel loop collapse(2) gang vector default(present)
+    !$acc parallel loop collapse(1) gang vector default(present)
                     do j = ix%beg, ix%end
                         grad_y%sf(j, 0) = (-3d0*var%sf(j, 0) + 4d0*var%sf(j, 1) - var%sf(j, 2))/ &
                                             (y_cc(2) - y_cc(0))
                     end do
             end if
             if (bc_y%end <= -3) then
-    !$acc parallel loop collapse(2) gang vector default(present)
+    !$acc parallel loop collapse(1) gang vector default(present)
                     do j = ix%beg, ix%end
                         grad_y%sf(j, n) = (3d0*var%sf(j, n) - 4d0*var%sf(j, n - 1) + var%sf(j, n - 2))/ &
                                             (y_cc(n) - y_cc(n - 2))
@@ -221,7 +221,7 @@ module m_viscous
             iv%beg = mom_idx%beg; iv%end = mom_idx%end
             !$acc update device(iv)
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                 do k = iy%beg, iy%end
                     do j = ix%beg + 1, ix%end
     !$acc loop seq
@@ -234,7 +234,7 @@ module m_viscous
                     end do
                 end do
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                 do k = iy%beg, iy%end
                     do j = ix%beg, ix%end - 1
     !$acc loop seq
@@ -249,7 +249,7 @@ module m_viscous
 
             if (n > 0) then
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                     do j = iy%beg + 1, iy%end
                         do k = ix%beg, ix%end
                             !$acc loop seq
@@ -262,7 +262,7 @@ module m_viscous
                         end do
                     end do
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                     do j = iy%beg, iy%end - 1
                         do k = ix%beg, ix%end
                             !$acc loop seq
@@ -275,7 +275,7 @@ module m_viscous
                         end do
                     end do
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                     do j = iy%beg + 1, iy%end
                         do k = ix%beg + 1, ix%end - 1
     !$acc loop seq
@@ -292,7 +292,7 @@ module m_viscous
                         end do
                     end do
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                     do j = iy%beg, iy%end - 1
                         do k = ix%beg + 1, ix%end - 1
     !$acc loop seq
@@ -310,7 +310,7 @@ module m_viscous
                         end do
                     end do
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                     do k = iy%beg + 1, iy%end - 1
                         do j = ix%beg + 1, ix%end
     !$acc loop seq
@@ -328,7 +328,7 @@ module m_viscous
                         end do
                     end do
 
-    !$acc parallel loop collapse(3) gang vector default(present)
+    !$acc parallel loop collapse(2) gang vector default(present)
                     do k = iy%beg + 1, iy%end - 1
                         do j = ix%beg, ix%end - 1
     !$acc loop seq
@@ -408,7 +408,7 @@ module m_viscous
             ! cell-boundaries, to calculate the cell-averaged first-order
             ! spatial derivatives inside the cell.
 
-!$acc parallel loop collapse(3) gang vector default(present)
+!$acc parallel loop collapse(2) gang vector default(present)
                 do k = iy%beg, iy%end
                     do j = ix%beg + 1, ix%end - 1
 !$acc loop seq
@@ -435,7 +435,7 @@ module m_viscous
             ! cell-boundaries, to calculate the cell-averaged first-order
             ! spatial derivatives inside the cell.
 
-!$acc parallel loop collapse(3) gang vector default(present)
+!$acc parallel loop collapse(2) gang vector default(present)
 
                 do k = iy%beg + 1, iy%end - 1
                     do j = ix%beg, ix%end

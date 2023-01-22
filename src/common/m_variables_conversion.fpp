@@ -323,7 +323,7 @@ contains
 
         integer :: i, j, k, l !< Generic loop iterators
         
-        !$acc parallel loop collapse(3) gang vector default(present) private(alpha_K, alpha_rho_K, Re_K, rho_K, gamma_K, pi_inf_K, dyn_pres_K)
+        !$acc parallel loop collapse(2) gang vector default(present) private(alpha_K, alpha_rho_K, Re_K, rho_K, gamma_K, pi_inf_K, dyn_pres_K)
         do k = iyb, iye
             do j = ixb, ixe
                 dyn_pres_K = 0d0
@@ -497,7 +497,7 @@ contains
         ! Computing the flux variables from the primitive variables, without
         ! accounting for the contribution of either viscosity or capillarity
 #ifdef MFC_SIMULATION
-!$acc parallel loop collapse(3) gang vector default(present) private(alpha_rho_K, vel_K, alpha_K, Re_K)
+!$acc parallel loop collapse(2) gang vector default(present) private(alpha_rho_K, vel_K, alpha_K, Re_K)
         do k = is2b, is2e
             do j = is1b, is1e
 

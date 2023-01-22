@@ -193,54 +193,55 @@ contains
         integer :: i, j, k !< Generic loop iterators
 
         ! Computing Stability Criteria at Current Time-step ================
-!$acc parallel loop collapse(3) gang vector default(present) private(alpha_rho, vel, alpha, Re)
-            do k = 0, n
-                do j = 0, m
 
-                    do i = 1, num_fluids
-                        alpha_rho(i) = q_prim_vf(i)%sf(j, k)
-                        alpha(i) = q_prim_vf(E_idx + i)%sf(j, k)
-                    end do
+        !$acc parallel loop collapse(2) gang vector default(present) private(alpha_rho, vel, alpha, Re)
+        do k = 0, n
+            do j = 0, m
 
-                    call s_convert_species_to_mixture_variables_acc(rho, gamma, pi_inf, alpha, alpha_rho, Re)
-
-                    do i = 1, num_dims
-                        vel(i) = q_prim_vf(contxe + i)%sf(j, k)
-                    end do
-
-                    pres = q_prim_vf(E_idx)%sf(j, k)
-
-                    ! Compute mixture sound speed
-                    c = (((gamma + 1d0)*pres + pi_inf)/(gamma*rho))
-                    c = sqrt(c)
-
-                    if (n > 0) then
-                        !2D
-                        icfl_sf(j, k) = dt/min(dx(j)/(abs(vel(1)) + c), &
-                                                  dy(k)/(abs(vel(2)) + c))
-
-                        if (any(Re_size > 0)) then
-                            vcfl_sf(j, k) = maxval(dt/Re)/min(dx(j), dy(k))**2d0
-
-                            Rc_sf(j, k) = min(dx(j)*(abs(vel(1)) + c), &
-                                                 dy(k)*(abs(vel(2)) + c)) &
-                                             /maxval(1d0/Re)
-
-                        end if
-                    else
-                        !1D
-                        icfl_sf(j, k) = (dt/dx(j))*(abs(vel(1)) + c)
-
-                        if (any(Re_size > 0)) then
-
-                            vcfl_sf(j, k) = maxval(dt/Re)/dx(j)**2d0
-
-                            Rc_sf(j, k) = dx(j)*(abs(vel(1)) + c)/maxval(1d0/Re)
-
-                        end if
-                    end if
+                do i = 1, num_fluids
+                    alpha_rho(i) = q_prim_vf(i)%sf(j, k)
+                    alpha(i) = q_prim_vf(E_idx + i)%sf(j, k)
                 end do
+
+                call s_convert_species_to_mixture_variables_acc(rho, gamma, pi_inf, alpha, alpha_rho, Re)
+
+                do i = 1, num_dims
+                    vel(i) = q_prim_vf(contxe + i)%sf(j, k)
+                end do
+
+                pres = q_prim_vf(E_idx)%sf(j, k)
+
+                ! Compute mixture sound speed
+                c = (((gamma + 1d0)*pres + pi_inf)/(gamma*rho))
+                c = sqrt(c)
+
+                if (n > 0) then
+                    !2D
+                    icfl_sf(j, k) = dt/min(dx(j)/(abs(vel(1)) + c), &
+                                              dy(k)/(abs(vel(2)) + c))
+
+                    if (any(Re_size > 0)) then
+                        vcfl_sf(j, k) = maxval(dt/Re)/min(dx(j), dy(k))**2d0
+
+                        Rc_sf(j, k) = min(dx(j)*(abs(vel(1)) + c), &
+                                             dy(k)*(abs(vel(2)) + c)) &
+                                         /maxval(1d0/Re)
+
+                    end if
+                else
+                    !1D
+                    icfl_sf(j, k) = (dt/dx(j))*(abs(vel(1)) + c)
+
+                    if (any(Re_size > 0)) then
+
+                        vcfl_sf(j, k) = maxval(dt/Re)/dx(j)**2d0
+
+                        Rc_sf(j, k) = dx(j)*(abs(vel(1)) + c)/maxval(1d0/Re)
+
+                    end if
+                end if
             end do
+        end do
         ! END: Computing Stability Criteria at Current Time-step ===========
 
         ! Determining local stability criteria extrema at current time-step
