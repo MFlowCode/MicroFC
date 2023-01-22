@@ -54,8 +54,6 @@ module m_start_up
 
     end interface ! ========================================================
 
-    type(scalar_field), allocatable, dimension(:) :: grad_x_vf, grad_y_vf, norm_vf
-
     procedure(s_read_abstract_data_files), pointer :: s_read_data_files => null()
 
 contains
@@ -658,10 +656,6 @@ contains
 
     subroutine s_initialize_start_up_module() !-----------------------------
 
-        type(int_bounds_info) :: ix, iy, iz
-
-        integer :: i !< Generic loop iterator
-
         if (parallel_io .neqv. .true.) then
             s_read_data_files => s_read_serial_data_files
         else
@@ -671,8 +665,6 @@ contains
     end subroutine s_initialize_start_up_module ! --------------------------
 
     subroutine s_finalize_start_up_module() ! ------------------------------
-
-        integer :: i !< Generic loop interator
 
         s_read_data_files => null()
 

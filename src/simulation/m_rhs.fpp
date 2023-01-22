@@ -78,11 +78,6 @@ module m_rhs
     type(vector_field), allocatable, dimension(:) :: flux_src_n
     !> @}
 
-    !> @name Additional field for capillary source terms
-    !> @{
-    type(scalar_field), allocatable, dimension(:) :: tau_Re_vf
-    !> @}
-
     type(vector_field), allocatable, dimension(:) :: qL_prim, qR_prim
 
     type(int_bounds_info) :: iv !< Vector field indical bounds
@@ -96,13 +91,8 @@ module m_rhs
 
     type(int_bounds_info) :: ixt, iyt
 
-    !> @name Saved fluxes for testing
-    !> @{
     type(vector_field), allocatable, dimension(:) :: myflux_vf, myflux_src_vf
-    type(scalar_field) :: alf_sum
-    !> @}
 
-    real(kind(0d0)), allocatable, dimension(:, :, :) :: blkmod1, blkmod2, alpha1, alpha2
     real(kind(0d0)), allocatable, dimension(:, :, :) :: qL_rsx_vf, qL_rsy_vf, qR_rsx_vf, qR_rsy_vf
     real(kind(0d0)), allocatable, dimension(:, :, :) :: dqL_rsx_vf, dqL_rsy_vf, dqR_rsx_vf, dqR_rsy_vf
 
@@ -114,15 +104,13 @@ module m_rhs
     real(kind(0d0)), allocatable, dimension(:, :) :: Res
 !$acc declare create(Res)
 
-    character(50) :: file_path !< Local file path for saving debug files
-
 !$acc declare create(q_cons_qp,q_prim_qp,qL_cons_n,qR_cons_n,qL_prim_n,qR_prim_n,  &
 !$acc   dq_prim_dx_qp,dq_prim_dy_qp,gm_vel_qp,dqL_prim_dx_n,dqL_prim_dy_n, &
 !$acc   dqR_prim_dx_n,dqR_prim_dy_n,       &
 !$acc   flux_n,flux_src_n,       &
 !$acc   qL_prim, qR_prim, iv,ix, iy,is1,is2, &
-!$acc   myflux_vf, myflux_src_vf,alf_sum, &
-!$acc   blkmod1, blkmod2, alpha1, alpha2, qL_rsx_vf, qL_rsy_vf, qR_rsx_vf, qR_rsy_vf, &
+!$acc   myflux_vf, myflux_src_vf, &
+!$acc   qL_rsx_vf, qL_rsy_vf, qR_rsx_vf, qR_rsy_vf, &
 !$acc   dqL_rsx_vf, dqL_rsy_vf, dqR_rsx_vf, dqR_rsy_vf, &
 !$acc   ixt, iyt)
 
@@ -134,7 +122,7 @@ contains
         !!      other procedures that are necessary to setup the module.
     subroutine s_initialize_rhs_module() ! ---------------------------------
 
-        integer :: i, j, k, l !< Generic loop iterators
+        integer :: i, j, l !< Generic loop iterators
 
         ! Configuring Coordinate Direction Indexes =========================
         ix%beg = -buff_size; iy%beg = 0
@@ -421,7 +409,7 @@ contains
         type(scalar_field), dimension(sys_size), intent(INOUT) :: rhs_vf
         integer, intent(IN) :: t_step
 
-        integer :: i, j, k, l, r, q, ii, id !< Generic loop iterators
+        integer :: i, j, k, l, q, id !< Generic loop iterators
 
         ! Configuring Coordinate Direction Indexes =========================
         ix%beg = -buff_size; iy%beg = 0
@@ -472,7 +460,7 @@ contains
                                             dqR_prim_dx_n, dqR_prim_dy_n, &
                                             qR_prim, &
                                             q_prim_qp, &
-                                            dq_prim_dx_qp, dq_prim_dy_qp, gm_vel_qp, &
+                                            dq_prim_dx_qp, dq_prim_dy_qp, &
                                             ix, iy)
         call nvtxEndRange()
         
@@ -697,7 +685,7 @@ contains
         !!      boundary conditions.
     subroutine s_populate_conservative_variables_buffers() ! ---------------
 
-        integer :: i, j, l, k, r !< Generic loop iterators
+        integer :: i, j, l, k !< Generic loop iterators
 
         ! Population of Buffers in x-direction =============================
 
@@ -936,7 +924,6 @@ contains
         real(kind(0d0)), dimension(startx:, starty:, 1:), intent(INOUT) :: vL_x, vL_y, vR_x, vR_y
         integer, intent(IN) :: norm_dir
         integer :: weno_dir !< Coordinate direction of the WENO reconstruction
-        integer :: i, j, k
 
         if (norm_dir == 1) then
             is1 = ix; is2 = iy
@@ -967,7 +954,7 @@ contains
     !> Module deallocation and/or disassociation procedures
     subroutine s_finalize_rhs_module() ! -----------------------------------
 
-        integer :: i, j, k, l !< Generic loop iterators
+        integer :: i, j, l !< Generic loop iterators
 
         do j = cont_idx%beg, cont_idx%end
 !$acc exit data detach(q_prim_qp%vf(j)%sf)

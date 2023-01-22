@@ -24,9 +24,9 @@ module m_derived_variables
     implicit none
 
     private; public :: s_initialize_derived_variables_module, &
- s_initialize_derived_variables, &
- s_compute_derived_variables, &
- s_finalize_derived_variables_module
+                     s_initialize_derived_variables, &
+                     s_compute_derived_variables, &
+                     s_finalize_derived_variables_module
 
     !> @name Finite-difference coefficients
     !! Finite-difference (fd) coefficients in x-, y- and z-coordinate directions.
@@ -87,8 +87,6 @@ contains
     subroutine s_compute_derived_variables(t_step) ! -----------------------
 
         integer, intent(IN) :: t_step
-
-        integer :: i, j !< Generic loop iterators
 
         if (probe_wrt) then
             call s_write_probe_files(t_step, q_cons_ts(1)%vf)

@@ -54,9 +54,7 @@ program p_main
 
     implicit none
 
-    integer :: err_code, ierr
-
-    integer :: t_step, i, j, k, l !< Iterator for the time-stepping loop
+    integer :: t_step, i, j, k !< Iterator for the time-stepping loop
     real(kind(0d0)) :: time_avg, time_final
     real(kind(0d0)) :: io_time_avg, io_time_final
     real(kind(0d0)), allocatable, dimension(:) :: proc_time

@@ -49,13 +49,11 @@ module m_viscous
         !!  @param var Variable to compute derivative of
         !!  @param grad_x First coordinate direction component of the derivative
         !!  @param grad_y Second coordinate direction component of the derivative
-        !!  @param norm Norm of the gradient vector
-    subroutine s_compute_fd_gradient(var, grad_x, grad_y, norm, ix, iy)
+    subroutine s_compute_fd_gradient(var, grad_x, grad_y, ix, iy)
 
         type(scalar_field), intent(IN) :: var
         type(scalar_field), intent(INOUT) :: grad_x
         type(scalar_field), intent(INOUT) :: grad_y
-        type(scalar_field), intent(INOUT) :: norm
 
         integer :: j, k !< Generic loop iterators
 
@@ -165,7 +163,7 @@ module m_viscous
                              dqR_prim_dx_n, dqR_prim_dy_n, &
                              qR_prim, &
                              q_prim_qp, &
-                             dq_prim_dx_qp, dq_prim_dy_qp, gm_vel_qp,  &
+                             dq_prim_dx_qp, dq_prim_dy_qp,  &
                              ix, iy)
 
         real(kind(0d0)), dimension(startx:, starty:, 1:), &
@@ -181,9 +179,8 @@ module m_viscous
                              dqL_prim_dy_n, dqR_prim_dy_n
 
         type(vector_field) :: dq_prim_dx_qp, dq_prim_dy_qp
-        type(vector_field) :: gm_vel_qp
 
-        integer :: i, j, k, r !< Generic loop iterators
+        integer :: i, j, k
         type(int_bounds_info), intent(IN) :: ix, iy
 
         do i = 1, num_dims
@@ -354,7 +351,6 @@ module m_viscous
                         call s_compute_fd_gradient(q_prim_qp%vf(i), &
                                                 dq_prim_dx_qp%vf(i), &
                                                 dq_prim_dy_qp%vf(i), &
-                                                gm_vel_qp%vf(i), &
                                                 ix, iy)
                     end do
 
@@ -364,7 +360,6 @@ module m_viscous
                     call s_compute_fd_gradient(q_prim_qp%vf(i), &
                                             dq_prim_dx_qp%vf(i), &
                                             dq_prim_dx_qp%vf(i), &
-                                            gm_vel_qp%vf(i), &
                                             ix, iy)
                 end do
 

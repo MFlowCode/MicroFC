@@ -52,10 +52,9 @@ contains
         !!      other procedures that are necessary to setup the module.
     subroutine s_initialize_time_steppers_module() ! -----------------------
 
-        type(int_bounds_info) :: ix, iy, iz !<
-            !! Indical bounds in the x-, y- and z-directions
+        type(int_bounds_info) :: ix, iy !< Indical bounds in the x-, y- and z-directions
 
-        integer :: i, j !< Generic loop iterators
+        integer :: i, j
 
         ! Setting number of time-stages for selected time-stepping scheme
         if (time_stepper == 1) then
@@ -132,7 +131,7 @@ contains
         integer, intent(IN) :: t_step
         real(kind(0d0)), intent(INOUT) :: time_avg
 
-        integer :: i, j, k, l !< Generic loop iterator
+        integer :: i, j, k
         real(kind(0d0)) :: start, finish
 
         ! Stage 1 of 1 =====================================================
@@ -200,7 +199,7 @@ contains
         integer, intent(IN) :: t_step
         real(kind(0d0)), intent(INOUT) :: time_avg
 
-        integer :: i, j, k, l !< Generic loop iterator
+        integer :: i, j, k
         real(kind(0d0)) :: start, finish
 
         ! Stage 1 of 2 =====================================================
