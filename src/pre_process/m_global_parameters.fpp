@@ -226,7 +226,7 @@ contains
         !! any other tasks needed to properly setup the module
     subroutine s_initialize_global_parameters_module() ! ----------------------
 
-        integer :: i, j, fac
+        integer :: i
 
         ! Determining the layout of the state vectors and overall size of
         ! the system of equations, given the dimensionality and choice of

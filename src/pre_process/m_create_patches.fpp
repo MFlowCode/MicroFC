@@ -5,8 +5,7 @@ module m_create_patches
 
     use m_global_parameters     ! Global parameters for the code
 
-    use m_variables_conversion  ! Subroutines to change the state variables from
-    ! one form to another
+    use m_variables_conversion  ! Subroutines to change the state variables 
 
     use m_assign_patches
     ! ==========================================================================
@@ -51,7 +50,7 @@ contains
 
         real(kind(0d0)) :: pi_inf, gamma, lit_gamma
 
-        integer :: i, j  !< Generic loop operators
+        integer :: i
 
         pi_inf = fluid_pp(1)%pi_inf
         gamma = fluid_pp(1)%gamma
@@ -428,10 +427,10 @@ contains
         integer, intent(IN) :: patch_id
 
         ! Placeholders for the cell boundary values
-        real(kind(0d0)) :: a, b, c, d, pi_inf, gamma, lit_gamma
+        real(kind(0d0)) :: pi_inf, gamma, lit_gamma
 
         ! Generic loop iterators
-        integer :: i, j
+        integer :: i
 
         pi_inf = fluid_pp(1)%pi_inf
         gamma = fluid_pp(1)%gamma
@@ -481,7 +480,6 @@ contains
 
         integer, intent(IN) :: patch_id
 
-        real(kind(0d0)) :: a, b, c, d !< placeholderrs for the cell boundary values
         real(kind(0d0)) :: pi_inf, gamma, lit_gamma !< equation of state parameters
 
         integer :: i, j !< generic loop iterators

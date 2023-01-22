@@ -28,10 +28,10 @@ module m_data_output
     implicit none
 
     private; public :: s_write_serial_data_files, &
- s_write_parallel_data_files, &
- s_write_data_files, &
- s_initialize_data_output_module, &
- s_finalize_data_output_module
+         s_write_parallel_data_files, &
+         s_write_data_files, &
+         s_initialize_data_output_module, &
+         s_finalize_data_output_module
 
     abstract interface ! ===================================================
 
@@ -47,6 +47,7 @@ module m_data_output
                 intent(IN) :: q_cons_vf
 
         end subroutine s_write_abstract_data_files ! -------------------
+
     end interface ! ========================================================
 
     character(LEN=path_len + 2*name_len), private :: t_step_dir !<
@@ -79,7 +80,7 @@ contains
         character(LEN=len_trim(t_step_dir) + name_len) :: file_loc !<
             !! Generic string used to store the address of a particular file
 
-        integer :: i, j, k, l !< Generic loop iterator
+        integer :: i, j, k !< Generic loop iterator
         integer :: t_step
 
         real(kind(0d0)) :: gamma, lit_gamma, pi_inf     !< Temporary EOS params

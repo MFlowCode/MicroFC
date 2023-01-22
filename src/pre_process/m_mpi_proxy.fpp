@@ -21,7 +21,7 @@ module m_mpi_proxy
 
     implicit none
 
-    integer, private :: err_code, ierr !<
+    integer, private :: ierr !<
     !! Generic flags used to identify and report MPI errors
 
 contains
@@ -194,8 +194,6 @@ contains
 
 #ifdef MFC_MPI
 
-        integer :: j
-
         call MPI_GATHER(time_avg, 1, MPI_DOUBLE_PRECISION, proc_time(0), 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
 
 #endif
@@ -230,7 +228,7 @@ contains
         integer :: rem_cells
 
         ! Generic loop iterators
-        integer :: i, j
+        integer :: i
 
         if (num_procs == 1 .and. parallel_io) then
             do i = 1, num_dims
