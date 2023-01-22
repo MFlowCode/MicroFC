@@ -170,7 +170,7 @@ contains
                       -offset_y%beg:n + offset_y%end), &
                       intent(INOUT) :: q_sf
 
-        integer :: j, k, l, r !< Generic loop iterators
+        integer :: j, k, r !< Generic loop iterators
 
         ! Computing the vorticity component in the x-coordinate direction
         if (i == 1) then
@@ -230,8 +230,8 @@ contains
                       -offset_y%beg:n + offset_y%end), &
             intent(INOUT) :: q_sf
 
-        real(kind(0d0)) :: drho_dx, drho_dy, drho_dz !<
-            !! Spatial derivatives of the density in the x-, y- and z-directions
+        real(kind(0d0)) :: drho_dx, drho_dy !<
+            !! Spatial derivatives of the density in the x- and y-directions
 
         real(kind(0d0)), dimension(2) :: gm_rho_max !<
             !! Maximum value of the gradient magnitude (gm) of the density field
@@ -239,9 +239,7 @@ contains
             !! The first position in the variable contains the maximum value and
             !! the second contains the rank of the processor on which it occured.
 
-        real(kind(0d0)) :: alpha_unadv !< Unadvected volume fraction
-
-        integer :: i, j, k, l !< Generic loop iterators
+        integer :: i, j, k
 
         ! Computing Gradient Magnitude of Density ==========================
 

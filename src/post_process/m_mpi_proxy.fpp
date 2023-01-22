@@ -39,7 +39,7 @@ module m_mpi_proxy
 
     !> @name Generic flags used to identify and report MPI errors
     !> @{
-    integer, private :: err_code, ierr
+    integer, private :: ierr
     !> @}
 
 contains
@@ -277,7 +277,7 @@ contains
         integer :: rem_cells
 
         ! Generic loop iterators
-        integer :: i, j
+        integer :: i
 
         if (num_procs == 1 .and. parallel_io) then
             do i = 1, num_dims

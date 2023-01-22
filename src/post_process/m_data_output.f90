@@ -602,8 +602,7 @@ contains
         integer, dimension(num_procs) :: vartypes
 
         ! Generic loop iterator
-        integer :: i, j, k
-        real(kind(0d0)) :: start, finish
+        integer :: i
 
         ! Silo-HDF5 Database Format ========================================
 

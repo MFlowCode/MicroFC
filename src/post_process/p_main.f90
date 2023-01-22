@@ -43,14 +43,7 @@ program p_main
     !! Generic storage for the name(s) of the flow variable(s) that will be added
     !! to the formatted database file(s)
 
-    !> @name Generic loop iterator
-    !> @{
-    integer :: i, j, k
-    !> @}
-
-    real(kind(0d0)) :: total_volume !<
-    !! Variable for the total volume of the second volume fraction
-    !! to later on track the evolution of the radius of a bubble over time
+    integer :: i
 
     ! Initialization of the MPI environment
     call s_mpi_initialize()

@@ -196,7 +196,6 @@ contains
 
         integer :: ifile, ierr, data_size
         integer, dimension(MPI_STATUS_SIZE) :: status
-        real(kind(0d0)) :: start, finish
         integer(KIND=MPI_OFFSET_KIND) :: disp
         integer(KIND=MPI_OFFSET_KIND) :: m_MOK, n_MOK
         integer(KIND=MPI_OFFSET_KIND) :: WP_MOK, var_MOK, str_MOK
@@ -478,7 +477,7 @@ contains
         !!      the boundary conditions.
     subroutine s_populate_conservative_variables_buffer_regions() ! --------
 
-        integer :: i, j, k !< Generic loop iterators
+        integer :: i, j
 
         ! Populating Buffer Regions in the x-direction =====================
 
