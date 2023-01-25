@@ -2,7 +2,7 @@
 
 A micro [MFC](https://mflowcode.github.io).
 
-Not tested just yet.
+Not _fully_ tested just yet.
 
 ## Why 
 
