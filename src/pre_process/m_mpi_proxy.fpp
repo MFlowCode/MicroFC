@@ -135,65 +135,65 @@ contains
         if (n > 0) then
 
 
-                ! Initial values of the processor factorization optimization
-                num_procs_x = 1
-                num_procs_y = num_procs
-                ierr = -1
+            ! Initial values of the processor factorization optimization
+            num_procs_x = 1
+            num_procs_y = num_procs
+            ierr = -1
 
-                ! Computing minimization variable for these initial values
-                tmp_num_procs_x = num_procs_x
-                tmp_num_procs_y = num_procs_y
-                fct_min = 10d0*abs((m + 1)/tmp_num_procs_x &
-                                   - (n + 1)/tmp_num_procs_y)
+            ! Computing minimization variable for these initial values
+            tmp_num_procs_x = num_procs_x
+            tmp_num_procs_y = num_procs_y
+            fct_min = 10d0*abs((m + 1)/tmp_num_procs_x &
+                               - (n + 1)/tmp_num_procs_y)
 
-                ! Searching for optimal computational domain distribution
-                do i = 1, num_procs
+            ! Searching for optimal computational domain distribution
+            do i = 1, num_procs
 
-                    if (mod(num_procs, i) == 0 &
+                if (mod(num_procs, i) == 0 &
+                    .and. &
+                    (m + 1)/i >= num_stcls_min*weno_order) then
+
+                    tmp_num_procs_x = i
+                    tmp_num_procs_y = num_procs/i
+
+                    if (fct_min >= abs((m + 1)/tmp_num_procs_x &
+                                       - (n + 1)/tmp_num_procs_y) &
                         .and. &
-                        (m + 1)/i >= num_stcls_min*weno_order) then
+                        (n + 1)/tmp_num_procs_y &
+                        >= &
+                        num_stcls_min*weno_order) then
 
-                        tmp_num_procs_x = i
-                        tmp_num_procs_y = num_procs/i
-
-                        if (fct_min >= abs((m + 1)/tmp_num_procs_x &
-                                           - (n + 1)/tmp_num_procs_y) &
-                            .and. &
-                            (n + 1)/tmp_num_procs_y &
-                            >= &
-                            num_stcls_min*weno_order) then
-
-                            num_procs_x = i
-                            num_procs_y = num_procs/i
-                            fct_min = abs((m + 1)/tmp_num_procs_x &
-                                          - (n + 1)/tmp_num_procs_y)
-                            ierr = 0
-
-                        end if
+                        num_procs_x = i
+                        num_procs_y = num_procs/i
+                        fct_min = abs((m + 1)/tmp_num_procs_x &
+                                      - (n + 1)/tmp_num_procs_y)
+                        ierr = 0
 
                     end if
 
-                end do
-
-                ! Checking whether the decomposition of the computational
-                ! domain was successful
-                if (proc_rank == 0 .and. ierr == -1) then
-                    print '(A)', 'Unable to decompose computational '// &
-                        'domain for selected number of '// &
-                        'processors. Exiting ...'
-                    call MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
                 end if
 
-                ! Creating a new communicator using Cartesian topology
-                call MPI_CART_CREATE(MPI_COMM_WORLD, 2, (/num_procs_x, &
-                                                          num_procs_y/), (/.true., &
-                                                                           .true./), .false., MPI_COMM_CART, &
-                                     ierr)
+            end do
 
-                ! Finding corresponding Cartesian coordinates of the local
-                ! processor rank in newly declared cartesian communicator
-                call MPI_CART_COORDS(MPI_COMM_CART, proc_rank, 2, &
-                                     proc_coords, ierr)
+            ! Checking whether the decomposition of the computational
+            ! domain was successful
+            if (proc_rank == 0 .and. ierr == -1) then
+                print '(A)', 'Unable to decompose computational '// &
+                    'domain for selected number of '// &
+                    'processors. Exiting ...'
+                call MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
+            end if
+
+            ! Creating a new communicator using Cartesian topology
+            call MPI_CART_CREATE(MPI_COMM_WORLD, 2, (/num_procs_x, &
+                                                      num_procs_y/), (/.true., &
+                                                                       .true./), .false., MPI_COMM_CART, &
+                                 ierr)
+
+            ! Finding corresponding Cartesian coordinates of the local
+            ! processor rank in newly declared cartesian communicator
+            call MPI_CART_COORDS(MPI_COMM_CART, proc_rank, 2, &
+                                 proc_coords, ierr)
 
 
             ! END: Generating 2D Cartesian Processor Topology ==================
