@@ -20,6 +20,8 @@ module m_mpi_proxy
     use m_derived_types        !< Definitions of the derived types
 
     use m_global_parameters    !< Definitions of the global parameters
+
+    use m_mpi_common
     ! ==========================================================================
 
     implicit none
@@ -41,60 +43,10 @@ module m_mpi_proxy
 
 !$acc declare create(q_cons_buff_send, q_cons_buff_recv)
 
-    !real :: s_time, e_time
-    !real :: compress_time, mpi_time, decompress_time
-    !integer :: nCalls_time = 0
-
 contains
 
-    !> The subroutine intializes the MPI execution environment
-        !!      and queries both the number of processors which will be
-        !!      available for the job and the local processor rank.
-    subroutine s_mpi_initialize() ! ----------------------------------------
 
-#ifndef MFC_MPI
 
-        ! Serial run only has 1 processor
-        num_procs = 1
-        ! Local processor rank is 0
-        proc_rank = 0
-
-#else
-
-        ! Initializing the MPI environment
-        call MPI_INIT(ierr)
-
-        ! Checking whether the MPI environment has been properly intialized
-        if (ierr /= MPI_SUCCESS) then
-            print '(A)', 'Unable to initialize MPI environment. Exiting ...'
-            call MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
-        end if
-
-        ! Querying the number of processors available for the job
-        call MPI_COMM_SIZE(MPI_COMM_WORLD, num_procs, ierr)
-
-        ! Querying the rank of the local processor
-        call MPI_COMM_RANK(MPI_COMM_WORLD, proc_rank, ierr)
-
-#endif
-
-    end subroutine s_mpi_initialize ! --------------------------------------
-
-    !> The subroutine terminates the MPI execution environment.
-    subroutine s_mpi_abort() ! ---------------------------------------------
-
-#ifndef MFC_MPI
-
-        stop 1
-
-#else
-
-        ! Terminating the MPI environment
-        call MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
-
-#endif
-
-    end subroutine s_mpi_abort ! -------------------------------------------
 
     !> The subroutine that initializes MPI data structures
         !!  @param q_cons_vf Conservative variables
@@ -131,18 +83,6 @@ contains
 #endif
 
     end subroutine s_initialize_mpi_data ! ---------------------------------
-
-    !> Halts all processes until all have reached barrier.
-    subroutine s_mpi_barrier() ! -------------------------------------------
-
-#ifdef MFC_MPI
-
-        ! Calling MPI_BARRIER
-        call MPI_BARRIER(MPI_COMM_WORLD, ierr)
-
-#endif
-
-    end subroutine s_mpi_barrier ! -----------------------------------------
 
     !> The computation of parameters, the allocation of memory,
         !!      the association of pointers and/or the execution of any
@@ -316,7 +256,7 @@ contains
                 print '(A)', 'Unsupported combination of values '// &
                     'of num_procs, m, n and '// &
                     'weno_order. Exiting ...'
-                call s_mpi_abort()
+                    call MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
             end if
 
             ! Creating new communicator using the Cartesian topology
@@ -565,121 +505,7 @@ contains
 
     end subroutine s_mpi_sendrecv_grid_variables_buffers ! -----------------
 
-    !>  The goal of this subroutine is to determine the global
-        !!      extrema of the stability criteria in the computational
-        !!      domain. This is performed by sifting through the local
-        !!      extrema of each stability criterion. Note that each of
-        !!      the local extrema is from a single process, within its
-        !!      assigned section of the computational domain. Finally,
-        !!      note that the global extrema values are only bookkeept
-        !!      on the rank 0 processor.
-        !!  @param icfl_max_loc Local maximum ICFL stability criterion
-        !!  @param vcfl_max_loc Local maximum VCFL stability criterion
-        !!  @param Rc_min_loc Local minimum Rc stability criterion
-        !!  @param icfl_max_glb Global maximum ICFL stability criterion
-        !!  @param vcfl_max_glb Global maximum VCFL stability criterion
-        !!  @param Rc_min_glb Global minimum Rc stability criterion
-    subroutine s_mpi_reduce_stability_criteria_extrema(icfl_max_loc, & ! --
-                                                       vcfl_max_loc, &
-                                                       Rc_min_loc, &
-                                                       icfl_max_glb, &
-                                                       vcfl_max_glb, &
-                                                       Rc_min_glb)
 
-        real(kind(0d0)), intent(IN) :: icfl_max_loc
-        real(kind(0d0)), intent(IN) :: vcfl_max_loc
-        real(kind(0d0)), intent(IN) :: Rc_min_loc
-
-        real(kind(0d0)), intent(OUT) :: icfl_max_glb
-        real(kind(0d0)), intent(OUT) :: vcfl_max_glb
-        real(kind(0d0)), intent(OUT) :: Rc_min_glb
-
-#ifdef MFC_MPI
-
-        ! Reducing local extrema of ICFL, VCFL, CCFL and Rc numbers to their
-        ! global extrema and bookkeeping the results on the rank 0 processor
-        call MPI_REDUCE(icfl_max_loc, icfl_max_glb, 1, &
-                        MPI_DOUBLE_PRECISION, MPI_MAX, 0, &
-                        MPI_COMM_WORLD, ierr)
-
-        if (any(Re_size > 0)) then
-            call MPI_REDUCE(vcfl_max_loc, vcfl_max_glb, 1, &
-                            MPI_DOUBLE_PRECISION, MPI_MAX, 0, &
-                            MPI_COMM_WORLD, ierr)
-            call MPI_REDUCE(Rc_min_loc, Rc_min_glb, 1, &
-                            MPI_DOUBLE_PRECISION, MPI_MIN, 0, &
-                            MPI_COMM_WORLD, ierr)
-        end if
-
-#endif
-
-    end subroutine s_mpi_reduce_stability_criteria_extrema ! ---------------
-
-    !>  The following subroutine takes the input local variable
-        !!      from all processors and reduces to the sum of all
-        !!      values. The reduced variable is recorded back onto the
-        !!      original local variable on each processor.
-        !!  @param var_loc Some variable containing the local value which should be
-        !!  reduced amongst all the processors in the communicator.
-        !!  @param var_glb The globally reduced value
-    subroutine s_mpi_allreduce_sum(var_loc, var_glb) ! ---------------------
-
-        real(kind(0d0)), intent(IN) :: var_loc
-        real(kind(0d0)), intent(OUT) :: var_glb
-
-#ifdef MFC_MPI
-
-        ! Performing the reduction procedure
-        call MPI_ALLREDUCE(var_loc, var_glb, 1, MPI_DOUBLE_PRECISION, &
-                           MPI_SUM, MPI_COMM_WORLD, ierr)
-
-#endif
-
-    end subroutine s_mpi_allreduce_sum ! -----------------------------------
-
-    !>  The following subroutine takes the input local variable
-        !!      from all processors and reduces to the minimum of all
-        !!      values. The reduced variable is recorded back onto the
-        !!      original local variable on each processor.
-        !!  @param var_loc Some variable containing the local value which should be
-        !!  reduced amongst all the processors in the communicator.
-        !!  @param var_glb The globally reduced value
-    subroutine s_mpi_allreduce_min(var_loc, var_glb) ! ---------------------
-
-        real(kind(0d0)), intent(IN) :: var_loc
-        real(kind(0d0)), intent(OUT) :: var_glb
-
-#ifdef MFC_MPI
-
-        ! Performing the reduction procedure
-        call MPI_ALLREDUCE(var_loc, var_glb, 1, MPI_DOUBLE_PRECISION, &
-                           MPI_MIN, MPI_COMM_WORLD, ierr)
-
-#endif
-
-    end subroutine s_mpi_allreduce_min ! -----------------------------------
-
-    !>  The following subroutine takes the input local variable
-        !!      from all processors and reduces to the maximum of all
-        !!      values. The reduced variable is recorded back onto the
-        !!      original local variable on each processor.
-        !!  @param var_loc Some variable containing the local value which should be
-        !!  reduced amongst all the processors in the communicator.
-        !!  @param var_glb The globally reduced value
-    subroutine s_mpi_allreduce_max(var_loc, var_glb) ! ---------------------
-
-        real(kind(0d0)), intent(IN) :: var_loc
-        real(kind(0d0)), intent(OUT) :: var_glb
-
-#ifdef MFC_MPI
-
-        ! Performing the reduction procedure
-        call MPI_ALLREDUCE(var_loc, var_glb, 1, MPI_DOUBLE_PRECISION, &
-                           MPI_MAX, MPI_COMM_WORLD, ierr)
-
-#endif
-
-    end subroutine s_mpi_allreduce_max ! -----------------------------------
 
     !>  The goal of this procedure is to populate the buffers of
         !!      the cell-average conservative variables by communicating
@@ -720,8 +546,6 @@ contains
                             end do
                         end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
-
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
 !$acc host_data use_device( q_cons_buff_recv, q_cons_buff_send )
@@ -740,12 +564,8 @@ contains
 !$acc wait
                     else
 #endif // #if defined(_OPENACC) && defined(__PGI)
-                        !call cpu_time(s_time)
-!$acc update host(q_cons_buff_send)
-                        !call cpu_time(e_time)
-                        !compress_time = compress_time + (e_time - s_time)
 
-                        !call cpu_time(s_time)
+!$acc update host(q_cons_buff_send)
 
 ! Send/receive buffer to/from bc_x%end/bc_x%beg
                         call MPI_SENDRECV( &
@@ -756,8 +576,6 @@ contains
                             buff_size*sys_size*(n + 1), &
                             MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-                        !call cpu_time(e_time)
-                        !mpi_time = mpi_time + (e_time - s_time)
 
 #if defined(_OPENACC) && defined(__PGI)
                     end if
@@ -777,8 +595,6 @@ contains
                             end do
                         end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
-
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
 !$acc host_data use_device( q_cons_buff_recv, q_cons_buff_send )
@@ -797,13 +613,7 @@ contains
 !$acc wait
                     else
 #endif
-                        !call cpu_time(s_time)
-!$acc update host(q_cons_buff_send)
-                        !call cpu_time(e_time)
-                        !compress_time = compress_time + (e_time - s_time)
-
-                        !call cpu_time(s_time)
-                        ! Send/receive buffer to/from bc_x%end/bc_x%beg
+                        !$acc update host(q_cons_buff_send)
                         call MPI_SENDRECV( &
                             q_cons_buff_send(0), &
                             buff_size*sys_size*(n + 1), &
@@ -812,8 +622,6 @@ contains
                             buff_size*sys_size*(n + 1), &
                             MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-                        !call cpu_time(e_time)
-                        !mpi_time = mpi_time + (e_time - s_time)
 
 #if defined(_OPENACC) && defined(__PGI)
                     end if
@@ -823,9 +631,7 @@ contains
 
 #if defined(_OPENACC) && defined(__PGI)
                 if (cu_mpi .eqv. .false.) then
-                    !call cpu_time(s_time)
 !$acc update device(q_cons_buff_recv)
-                    !call cpu_time(e_time)
                     !decompress_time = decompress_time + (e_time - s_time)
                 end if
 #endif
@@ -858,8 +664,6 @@ contains
                             end do
                         end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
-
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
 !$acc host_data use_device( q_cons_buff_recv, q_cons_buff_send )
@@ -878,12 +682,8 @@ contains
 !$acc wait
                     else
 #endif
-                        !call cpu_time(s_time)
 !$acc update host(q_cons_buff_send)
-                        !call cpu_time(e_time)
-                        !compress_time = compress_time + (e_time - s_time)
 
-                        !call cpu_time(s_time)
                         ! Send/receive buffer to/from bc_x%end/bc_x%beg
                         call MPI_SENDRECV( &
                             q_cons_buff_send(0), &
@@ -893,7 +693,6 @@ contains
                             buff_size*sys_size*(n + 1), &
                             MPI_DOUBLE_PRECISION, bc_x%end, 1, &
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-                        !call cpu_time(e_time)
                         !mpi_time = mpi_time + (e_time - s_time)
 
 #if defined(_OPENACC) && defined(__PGI)
@@ -914,8 +713,6 @@ contains
                             end do
                         end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
-
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
 !$acc host_data use_device( q_cons_buff_recv, q_cons_buff_send )
@@ -934,12 +731,8 @@ contains
 !$acc wait
                     else
 #endif
-                        !call cpu_time(s_time)
 !$acc update host(q_cons_buff_send)
-                        !call cpu_time(e_time)
-                        !compress_time = compress_time + (e_time - s_time)
 
-                        !call cpu_time(s_time)
                         ! Send/receive buffer to/from bc_x%end/bc_x%beg
                         call MPI_SENDRECV( &
                             q_cons_buff_send(0), &
@@ -949,7 +742,6 @@ contains
                             buff_size*sys_size*(n + 1), &
                             MPI_DOUBLE_PRECISION, bc_x%end, 1, &
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-                        !call cpu_time(e_time)
                         !mpi_time = mpi_time + (e_time - s_time)
 
 #if defined(_OPENACC) && defined(__PGI)
@@ -959,9 +751,7 @@ contains
                 end if
 
                 if (cu_mpi .eqv. .false.) then
-                    !call cpu_time(s_time)
 !$acc update device(q_cons_buff_recv)
-                    !call cpu_time(e_time)
                     !decompress_time = decompress_time + (e_time - s_time)
                 end if
 
@@ -1000,8 +790,6 @@ contains
                             end do
                     end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
-
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
 !$acc host_data use_device( q_cons_buff_recv, q_cons_buff_send )
@@ -1049,8 +837,6 @@ contains
                             end do
                     end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
-
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
 !$acc host_data use_device( q_cons_buff_recv, q_cons_buff_send )
@@ -1069,12 +855,8 @@ contains
 !$acc wait
                     else
 #endif
-                        !call cpu_time(s_time)
 !$acc update host(q_cons_buff_send)
-                        !call cpu_time(e_time)
-                        !compress_time = compress_time + (e_time - s_time)
 
-                        !call cpu_time(s_time)
                         ! Send/receive buffer to/from bc_x%end/bc_x%beg
                         call MPI_SENDRECV( &
                             q_cons_buff_send(0), &
@@ -1084,8 +866,6 @@ contains
                             buff_size*sys_size*(m + 2*buff_size + 1), &
                             MPI_DOUBLE_PRECISION, bc_y%beg, 0, &
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-                        !call cpu_time(e_time)
-                        !mpi_time = mpi_time + (e_time - s_time)
 
 #if defined(_OPENACC) && defined(__PGI)
                     end if
@@ -1095,10 +875,7 @@ contains
 
 #if defined(_OPENACC) && defined(__PGI)
                 if (cu_mpi .eqv. .false.) then
-                    !call cpu_time(s_time)
 !$acc update device(q_cons_buff_recv)
-                    !call cpu_time(e_time)
-                    !decompress_time = decompress_time + (e_time - s_time)
                 end if
 #endif
 
@@ -1132,7 +909,6 @@ contains
                             end do
                     end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
@@ -1152,12 +928,8 @@ contains
 !$acc wait
                     else
 #endif
-                        !call cpu_time(s_time)
 !$acc update host(q_cons_buff_send)
-                        !call cpu_time(e_time)
-                        !compress_time = compress_time + (e_time - s_time)
 
-                        !call cpu_time(s_time)
                         ! Send/receive buffer to/from bc_x%end/bc_x%beg
                         call MPI_SENDRECV( &
                             q_cons_buff_send(0), &
@@ -1167,7 +939,6 @@ contains
                             buff_size*sys_size*(m + 2*buff_size + 1), &
                             MPI_DOUBLE_PRECISION, bc_y%end, 1, &
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-                        !call cpu_time(e_time)
                         !mpi_time = mpi_time + (e_time - s_time)
 
 #if defined(_OPENACC) && defined(__PGI)
@@ -1189,7 +960,6 @@ contains
                             end do
                     end do
 
-                    !call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
 #if defined(_OPENACC) && defined(__PGI)
                     if (cu_mpi) then
@@ -1209,12 +979,7 @@ contains
 !$acc wait
                     else
 #endif
-                        !call cpu_time(s_time)
 !$acc update host(q_cons_buff_send)
-                        !call cpu_time(e_time)
-                        !compress_time = compress_time + (e_time - s_time)
-
-                        !call cpu_time(s_time)
                         ! Send/receive buffer to/from bc_x%end/bc_x%beg
                         call MPI_SENDRECV( &
                             q_cons_buff_send(0), &
@@ -1224,7 +989,6 @@ contains
                             buff_size*sys_size*(m + 2*buff_size + 1), &
                             MPI_DOUBLE_PRECISION, bc_y%end, 1, &
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-                        !call cpu_time(e_time)
                         !mpi_time = mpi_time + (e_time - s_time)
 
 #if defined(_OPENACC) && defined(__PGI)
@@ -1235,10 +999,7 @@ contains
 
 #if defined(_OPENACC) && defined(__PGI)
                 if (cu_mpi .eqv. .false.) then
-                    !call cpu_time(s_time)
 !$acc update device(q_cons_buff_recv)
-                    !call cpu_time(e_time)
-                    !decompress_time = decompress_time + (e_time - s_time)
                 end if
 #endif
 
@@ -1276,17 +1037,5 @@ contains
 #endif
 
     end subroutine s_finalize_mpi_proxy_module ! ---------------------------
-
-    !> The subroutine finalizes the MPI execution environment.
-    subroutine s_mpi_finalize() ! ------------------------------------------
-
-#ifdef MFC_MPI
-
-        ! Finalizing the MPI environment
-        call MPI_FINALIZE(ierr)
-
-#endif
-
-    end subroutine s_mpi_finalize ! ----------------------------------------
 
 end module m_mpi_proxy
