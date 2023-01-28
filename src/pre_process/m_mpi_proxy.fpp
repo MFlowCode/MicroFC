@@ -93,18 +93,7 @@ contains
 
     end subroutine s_mpi_bcast_user_inputs ! -------------------------------
 
-    subroutine mpi_bcast_time_step_values(proc_time, time_avg)
 
-        real(kind(0d0)), dimension(0:num_procs - 1), intent(INOUT) :: proc_time
-        real(kind(0d0)), intent(INOUT) :: time_avg
-
-#ifdef MFC_MPI
-
-        call MPI_GATHER(time_avg, 1, MPI_DOUBLE_PRECISION, proc_time(0), 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
-
-#endif
-
-    end subroutine mpi_bcast_time_step_values
 
     !> Description: This subroutine takes care of efficiently distributing
         !!              the computational domain among the available processors
